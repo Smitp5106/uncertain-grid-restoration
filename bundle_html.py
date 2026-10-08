@@ -22,14 +22,9 @@ html_standalone = html.replace('<link rel="stylesheet" href="style.css">', f"<st
 html_standalone = html_standalone.replace('<script src="app.js"></script>', f"<script>\n{js}\n</script>")
 
 out_path1 = os.path.join(curr_dir, "dashboard.html")
-out_path2 = os.path.join(curr_dir, "uncertain_grid_restoration", "standalone_dashboard.html")
 
 with open(out_path1, "w", encoding="utf-8") as f:
     f.write(html_standalone)
 
-with open(out_path2, "w", encoding="utf-8") as f:
-    f.write(html_standalone)
-
-print("Bundled standalone HTML files generated successfully:")
+print("Bundled standalone HTML file generated successfully:")
 print("->", out_path1)
-print("->", out_path2)

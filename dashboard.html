@@ -675,9 +675,56 @@ body {
   vertical-align: middle;
 }
 
+@keyframes rowFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.switching-table tbody tr {
+  animation: rowFadeIn 0.25s ease-out;
+  transition: background-color 0.2s ease;
+}
+
+.switching-table tr.pending-step {
+  opacity: 0.65;
+  background-color: #f8fafc;
+}
+
 .switching-table tr.active-step {
   background-color: #fef9c3;
   font-weight: 600;
+  box-shadow: inset 3px 0 0 #eab308;
+}
+
+.switching-table tr.completed-step {
+  background-color: #ffffff;
+}
+
+.tag-action-pending {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.tag-result-pending {
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border: 1px dashed #cbd5e1;
+  display: inline-block;
+}
+
+.tag-result-active {
+  background: #fef08a;
+  color: #854d0e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid #facc15;
+  display: inline-block;
 }
 
 .tag-action-open {
@@ -691,8 +738,8 @@ body {
 }
 
 .tag-result-isolate {
-  background: #fef3c7;
-  color: #b45309;
+  background: #fee2e2;
+  color: #991b1b;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 0.72rem;
@@ -1112,26 +1159,10 @@ body {
                 </tr>
               </thead>
               <tbody>
-                <tr id="stepRow1">
-                  <td>1</td>
-                  <td>1.5</td>
-                  <td><span class="tag-action-open">Open</span></td>
-                  <td id="swLine1">18-19</td>
-                  <td><span class="tag-result-isolate">Isolate fault</span></td>
-                </tr>
-                <tr id="stepRow2">
-                  <td>2</td>
-                  <td>12.3</td>
-                  <td><span class="tag-action-close">Close</span></td>
-                  <td id="swLine2">33-32</td>
-                  <td><span class="tag-result-restore">Restore load</span></td>
-                </tr>
-                <tr id="stepRow3">
-                  <td>3</td>
-                  <td>28.4</td>
-                  <td><span class="tag-action-close">Close</span></td>
-                  <td id="swLine3">25-29</td>
-                  <td><span class="tag-result-restore">Restore load</span></td>
+                <tr>
+                  <td colspan="5" style="text-align: center; color: #94a3b8; padding: 18px 10px; font-style: italic;">
+                    Standby — No switching actions executed yet (Start simulation to begin restoration)
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -2063,24 +2094,66 @@ function updateDashboardUI() {
 
 function updateSwitchingTable() {
   const tbody = document.querySelector('#switchingTable tbody');
-  if (!tbody || !State.powerFlow || !State.powerFlow.switching_steps) return;
+  if (!tbody) return;
+  
+  if (!State.powerFlow || !State.powerFlow.switching_steps || State.powerFlow.switching_steps.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; color: #94a3b8; padding: 18px 10px; font-style: italic;">
+          Standby — No switching actions for this scenario
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
   const t = State.time;
+  const steps = State.powerFlow.switching_steps;
+
+  let lastExecutedIdx = -1;
+  for (let i = 0; i < steps.length; i++) {
+    if (t >= steps[i].time) lastExecutedIdx = i;
+  }
 
   tbody.innerHTML = '';
-  State.powerFlow.switching_steps.forEach(st => {
+
+  steps.forEach((st, idx) => {
     const tr = document.createElement('tr');
-    if (t >= st.time) tr.className = 'active-step';
+    const isExecuted = (t >= st.time);
+    const isActive = (idx === lastExecutedIdx);
 
-    const tagClass = st.action === 'Open' ? 'tag-action-open' : 'tag-action-close';
-    const resClass = st.tag === 'isolate' ? 'tag-result-isolate' : 'tag-result-restore';
+    if (!isExecuted) {
+      tr.className = 'pending-step';
+      tr.innerHTML = `
+        <td>${st.step}</td>
+        <td>${st.time.toFixed(1)}</td>
+        <td><span class="tag-action-pending">${st.action}</span></td>
+        <td>${st.switch}</td>
+        <td><span class="tag-result-pending">⏳ Scheduled (${st.result})</span></td>
+      `;
+    } else if (isActive) {
+      tr.className = 'active-step';
+      const tagClass = st.action === 'Open' ? 'tag-action-open' : 'tag-action-close';
+      tr.innerHTML = `
+        <td>${st.step}</td>
+        <td>${st.time.toFixed(1)}</td>
+        <td><span class="${tagClass}">${st.action}</span></td>
+        <td>${st.switch}</td>
+        <td><span class="tag-result-active">⚡ Active: ${st.result}</span></td>
+      `;
+    } else {
+      tr.className = 'completed-step';
+      const tagClass = st.action === 'Open' ? 'tag-action-open' : 'tag-action-close';
+      const resClass = st.tag === 'isolate' ? 'tag-result-isolate' : 'tag-result-restore';
+      tr.innerHTML = `
+        <td>${st.step}</td>
+        <td>${st.time.toFixed(1)}</td>
+        <td><span class="${tagClass}">${st.action}</span></td>
+        <td>${st.switch}</td>
+        <td><span class="${resClass}">✅ ${st.result}</span></td>
+      `;
+    }
 
-    tr.innerHTML = `
-      <td>${st.step}</td>
-      <td>${st.time.toFixed(1)}</td>
-      <td><span class="${tagClass}">${st.action}</span></td>
-      <td>${st.switch}</td>
-      <td><span class="${resClass}">${st.result}</span></td>
-    `;
     tbody.appendChild(tr);
   });
 }
