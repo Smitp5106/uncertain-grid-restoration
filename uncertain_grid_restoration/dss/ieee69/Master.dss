@@ -1,0 +1,13 @@
+Clear
+
+New Circuit.IEEE69 basekv=12.66 pu=1.00 phases=3 bus1=1
+~ Mvasc3=200000 Mvasc1=200000
+
+Redirect Lines.dss
+Redirect Loads.dss
+
+Set VoltageBases = [12.66]
+CalcVoltageBases
+
+Set Mode=Snapshot
+Solve

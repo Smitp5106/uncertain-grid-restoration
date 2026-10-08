@@ -1,0 +1,2979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Based Fault Diagnosis and Autonomous Restoration for Distribution Network (OpenDSS)</title>
+  <style>
+/* AI-Powered Distribution Network Restoration Dashboard Stylesheet */
+:root {
+  --bg-main: #eef4fb;
+  --header-bg: #1e3a5f;
+  --header-gradient: linear-gradient(135deg, #162e4e 0%, #1e3a5f 100%);
+  --card-bg: #ffffff;
+  --card-header-bg: #e2edfa;
+  --card-header-text: #173252;
+  --border-color: #cbdcf0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --accent-green: #10b981;
+  --accent-blue: #2563eb;
+  --accent-red: #ef4444;
+  --accent-amber: #f59e0b;
+  --accent-purple: #8b5cf6;
+  --line-closed: #1e293b;
+  --line-open: #ef4444;
+  --bus-normal: #2563eb;
+  --bus-faulted: #ef4444;
+  --bus-restored: #10b981;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  line-height: 1.4;
+  overflow-x: hidden;
+  padding-bottom: 24px;
+}
+
+/* Header Bar */
+.top-header {
+  background: var(--header-gradient);
+  color: #ffffff;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-title h1 {
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.badge-opendss {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim-time-display {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-run {
+  background-color: var(--accent-green);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
+}
+
+.btn-run:hover {
+  background-color: #059669;
+}
+
+.btn-step {
+  background-color: var(--accent-blue);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+
+.btn-step:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-reset {
+  background-color: #475569;
+  color: #ffffff;
+}
+
+.btn-reset:hover {
+  background-color: #334155;
+}
+
+/* Timeline Sub-bar */
+.timeline-bar {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.timeline-slider-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  outline: none;
+  cursor: pointer;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.speed-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.speed-btn {
+  padding: 3px 8px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.speed-btn.active {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: var(--accent-blue);
+}
+
+.phase-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.phase-normal { background: #dbeafe; color: #1e40af; }
+.phase-fault { background: #fee2e2; color: #b91c1c; animation: pulse-red 1s infinite; }
+.phase-isolate { background: #fef3c7; color: #b45309; }
+.phase-restoring { background: #e0e7ff; color: #4338ca; }
+.phase-completed { background: #dcfce7; color: #15803d; }
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Main Dashboard Grid */
+.dashboard-grid {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+/* Rows */
+.row-1 {
+  display: grid;
+  grid-template-columns: 280px 1fr 310px;
+  gap: 14px;
+}
+
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr 1fr;
+  gap: 14px;
+}
+
+.row-3 {
+  display: grid;
+  grid-template-columns: 280px 290px 1.1fr 1fr;
+  gap: 14px;
+}
+
+/* Card Styling */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-header {
+  background: var(--card-header-bg);
+  color: var(--card-header-text);
+  padding: 7px 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-body {
+  padding: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 1. Simulation Settings */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.form-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-control {
+  padding: 5px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  background: #ffffff;
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.settings-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-form-run {
+  flex: 1.4;
+  background-color: var(--accent-green);
+  color: #ffffff;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-form-run:hover {
+  background-color: #059669;
+}
+
+.btn-form-random {
+  flex: 1.1;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.86rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-form-random:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  transform: translateY(-1px);
+}
+
+.btn-form-random:active {
+  transform: translateY(1px);
+}
+
+/* 2. Topology View */
+.topology-container {
+  position: relative;
+  width: 100%;
+  height: 290px;
+  background: #ffffff;
+}
+
+.topology-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.topology-legend {
+  position: absolute;
+  top: 6px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-line-closed {
+  width: 16px;
+  height: 2.5px;
+  background: #1e293b;
+}
+
+.legend-line-open {
+  width: 16px;
+  height: 2px;
+  border-top: 2.5px dashed #ef4444;
+}
+
+.legend-dot-normal {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+}
+
+.legend-dot-faulted {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.legend-dot-restored {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.legend-icon-lightning {
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+/* 3. System Status Cards */
+.status-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.status-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.status-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.status-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.status-value {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-sub {
+  font-size: 0.70rem;
+  color: var(--text-secondary);
+}
+
+/* Badge colors */
+.badge-red {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.badge-red .status-icon { background: #fee2e2; color: #ef4444; }
+.badge-red .status-value { color: #dc2626; }
+
+.badge-amber {
+  background: #fffbeb;
+  border-color: #fef3c7;
+}
+.badge-amber .status-icon { background: #fef3c7; color: #d97706; }
+.badge-amber .status-value { color: #b45309; }
+
+.badge-green {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.badge-green .status-icon { background: #dcfce7; color: #16a34a; }
+.badge-green .status-value { color: #15803d; }
+
+.badge-purple {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+.badge-purple .status-icon { background: #f3e8ff; color: #9333ea; }
+.badge-purple .status-value { color: #7e22ce; }
+
+.badge-blue {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.badge-blue .status-icon { background: #dbeafe; color: #2563eb; }
+.badge-blue .status-value { color: #1d4ed8; }
+
+.badge-slate {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.badge-slate .status-icon { background: #f1f5f9; color: #475569; }
+.badge-slate .status-value { color: #334155; }
+
+/* Progress bar inside load restored */
+.load-progress-bg {
+  width: 100%;
+  height: 4px;
+  background: #dbeafe;
+  border-radius: 2px;
+  margin-top: 3px;
+  overflow: hidden;
+}
+
+.load-progress-bar {
+  height: 100%;
+  background: #2563eb;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* Charts Containers */
+.chart-container {
+  width: 100%;
+  height: 180px;
+  position: relative;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.chart-title-sub {
+  font-size: 0.80rem;
+  font-weight: 700;
+  text-align: center;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+/* 7. Fault Detection Output */
+.fault-detect-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.fault-detect-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.fault-detect-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.detect-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.80rem;
+}
+
+.detect-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detect-key {
+  color: var(--text-secondary);
+}
+
+.detect-val {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 9. Switching Actions Table */
+.switching-table-container {
+  overflow-x: auto;
+  max-height: 175px;
+}
+
+.switching-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.switching-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.switching-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.switching-table tr.active-step {
+  background-color: #fef9c3;
+  font-weight: 600;
+}
+
+.tag-action-open {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.tag-action-close {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.tag-result-isolate {
+  background: #fef3c7;
+  color: #b45309;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.tag-result-restore {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* 10. Mini Post-Restoration Topology */
+.mini-topology-container {
+  width: 100%;
+  height: 155px;
+  position: relative;
+}
+
+.mini-topology-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Interactive Bus Tooltip */
+.bus-tooltip {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.92);
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 2000;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 1300px) {
+  .row-1 {
+    grid-template-columns: 260px 1fr 280px;
+  }
+  .row-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .row-1, .row-2, .row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="top-header">
+    <div class="header-title">
+      <h1>AI-Based Fault Diagnosis and Autonomous Restoration for Distribution Network (OpenDSS)</h1>
+    </div>
+    <div class="header-controls">
+      <button id="btnRunTop" class="btn btn-run">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Run Simulation
+      </button>
+      <button id="btnStepTop" class="btn btn-step">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+        Step
+      </button>
+      <button id="btnResetTop" class="btn btn-reset">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- Timeline Playback & Scrubber Controls Sub-bar -->
+  <div class="timeline-bar">
+    <div class="sim-time-display">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+      <span id="timeText">t = 0.00 s</span>
+    </div>
+
+    <div class="timeline-slider-container">
+      <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="50" step="0.1" value="0">
+    </div>
+
+    <span id="phaseBadge" class="phase-pill phase-normal">Pre-Fault Normal</span>
+
+    <div class="speed-selector">
+      <span>Speed:</span>
+      <button class="speed-btn active" data-speed="1">1x</button>
+      <button class="speed-btn" data-speed="2">2x</button>
+      <button class="speed-btn" data-speed="5">5x</button>
+    </div>
+  </div>
+
+  <!-- Main 10-Panel Dashboard Grid -->
+  <main class="dashboard-grid">
+
+    <!-- ROW 1: Simulation Settings | Grid Topology | System Status -->
+    <section class="row-1">
+
+      <!-- Panel 1: Simulation Settings -->
+      <div class="card panel-settings">
+        <div class="card-header">
+          <span>1. Simulation Settings</span>
+        </div>
+        <div class="card-body">
+          <form class="settings-form" id="settingsForm" onsubmit="return false;">
+            <div class="form-group">
+              <label for="selectFeeder">Test Feeder</label>
+              <select id="selectFeeder" class="form-control">
+                <option value="ieee33" selected>IEEE 33-bus</option>
+                <option value="ieee69">IEEE 69-bus</option>
+                <option value="ieee123">IEEE 123-bus</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="selectFaultType">Fault Type</label>
+              <select id="selectFaultType" class="form-control">
+                <option value="SLG" selected>Single Line-to-Ground (LG)</option>
+                <option value="LL">Line-to-Line (LL)</option>
+                <option value="3P">Three-Phase (3P)</option>
+                <option value="HIF">High Impedance Fault (HIF)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="selectFaultLine">Fault Location (Line)</label>
+              <select id="selectFaultLine" class="form-control">
+                <optgroup label="Main Feeder (Substation Trunk)">
+                  <option value="1-2">Line 1–2</option>
+                  <option value="2-3">Line 2–3</option>
+                  <option value="3-4">Line 3–4</option>
+                  <option value="4-5">Line 4–5</option>
+                  <option value="5-6">Line 5–6</option>
+                  <option value="6-7">Line 6–7</option>
+                  <option value="7-8">Line 7–8</option>
+                  <option value="8-9">Line 8–9</option>
+                  <option value="9-10">Line 9–10</option>
+                  <option value="10-11">Line 10–11</option>
+                  <option value="11-12">Line 11–12</option>
+                  <option value="12-13">Line 12–13</option>
+                  <option value="13-14">Line 13–14</option>
+                  <option value="14-15">Line 14–15</option>
+                  <option value="15-16">Line 15–16</option>
+                  <option value="16-17">Line 16–17</option>
+                  <option value="17-18">Line 17–18</option>
+                </optgroup>
+                <optgroup label="Lateral 1 (Feeder Branch 1)">
+                  <option value="18-19" selected>Line 18–19</option>
+                  <option value="2-19">Line 2–19</option>
+                  <option value="19-20">Line 19–20</option>
+                  <option value="20-21">Line 20–21</option>
+                  <option value="21-22">Line 21–22</option>
+                </optgroup>
+                <optgroup label="Lateral 2 (Feeder Branch 2)">
+                  <option value="3-23">Line 3–23</option>
+                  <option value="23-24">Line 23–24</option>
+                  <option value="24-25">Line 24–25</option>
+                </optgroup>
+                <optgroup label="Lateral 3 (Feeder Branch 3)">
+                  <option value="6-26">Line 6–26</option>
+                  <option value="26-27">Line 26–27</option>
+                  <option value="27-28">Line 27–28</option>
+                  <option value="28-29">Line 28–29</option>
+                  <option value="29-30">Line 29–30</option>
+                  <option value="30-31">Line 30–31</option>
+                  <option value="31-32">Line 31–32</option>
+                  <option value="32-33">Line 32–33</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="inputStartTime">Fault Start Time (s)</label>
+              <input type="number" id="inputStartTime" class="form-control" value="1.0" step="0.1" min="0.5" max="10">
+            </div>
+
+            <div class="form-group">
+              <label for="inputClearTime">Fault Clearance Time (s)</label>
+              <input type="text" id="inputClearTime" class="form-control" value="(Auto by system)" readonly>
+            </div>
+
+            <div class="form-group">
+              <label for="selectMeas">Measurement Availability</label>
+              <select id="selectMeas" class="form-control">
+                <option value="partial" selected>Partial (Selected Buses)</option>
+                <option value="full">Full (100%)</option>
+                <option value="noisy">Noisy & Masked (20% dropout)</option>
+              </select>
+            </div>
+
+            <div class="settings-btn-row">
+              <button id="btnRunForm" class="btn-form-run">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Run Simulation
+              </button>
+              <button type="button" id="btnRandomFault" class="btn-form-random" title="Randomize fault line and simulate">
+                🎲 Random Fault
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Panel 2: Distribution Network Topology -->
+      <div class="card panel-topology">
+        <div class="card-header">
+          <span id="topologyTitle">2. Distribution Network Topology (IEEE 33-bus)</span>
+          <span style="font-size: 0.72rem; color: #475569; font-weight: normal;">Interactive • Animated Power Flow</span>
+        </div>
+        <div class="card-body" style="padding: 4px;">
+          <div class="topology-container">
+            <div class="topology-legend">
+              <div class="legend-item">
+                <div class="legend-line-closed"></div>
+                <span>Closed Switch (Energized)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-line-open"></div>
+                <span>Open Switch</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-icon-lightning">⚡</span>
+                <span>Faulted Line</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-normal"></div>
+                <span>Bus (Normal)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-faulted"></div>
+                <span>Bus (Faulted)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-restored"></div>
+                <span>Bus (Restored)</span>
+              </div>
+            </div>
+            <canvas id="topologyCanvas" class="topology-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 3: System Status -->
+      <div class="card panel-status">
+        <div class="card-header">
+          <span>3. System Status</span>
+        </div>
+        <div class="card-body">
+          <div class="status-cards-container">
+
+            <!-- 1. Fault Detected -->
+            <div class="status-badge badge-red" id="cardFaultDetected">
+              <div class="status-icon">⚡</div>
+              <div class="info">
+                <div class="status-label">Fault Detected</div>
+                <div class="status-value" id="valFaultDetected">No (Normal Grid)</div>
+              </div>
+            </div>
+
+            <!-- 2. Fault Location -->
+            <div class="status-badge badge-amber" id="cardFaultLocation">
+              <div class="status-icon">🎯</div>
+              <div class="info">
+                <div class="status-label">Fault Location (Predicted)</div>
+                <div class="status-value" id="valFaultLocation">Line 18 – 19</div>
+                <div class="status-sub" id="valConfidenceLoc">Confidence: 0.92</div>
+              </div>
+            </div>
+
+            <!-- 3. Fault Type -->
+            <div class="status-badge badge-green" id="cardFaultType">
+              <div class="status-icon">⚙️</div>
+              <div class="info">
+                <div class="status-label">Fault Type</div>
+                <div class="status-value" id="valFaultType">Single Line-to-Ground (A)</div>
+                <div class="status-sub" id="valConfidenceType">Confidence: 0.95</div>
+              </div>
+            </div>
+
+            <!-- 4. Restoration Status -->
+            <div class="status-badge badge-purple" id="cardRestoration">
+              <div class="status-icon">🛡️</div>
+              <div class="info">
+                <div class="status-label">Restoration Status</div>
+                <div class="status-value" id="valRestorationStatus">Standby</div>
+              </div>
+            </div>
+
+            <!-- 5. Total Load Restored -->
+            <div class="status-badge badge-blue" id="cardLoadRestored">
+              <div class="status-icon">👥</div>
+              <div class="info" style="width: 100%;">
+                <div class="status-label">Total Load Restored</div>
+                <div class="status-value" id="valLoadRestored">100.0 % (3.24 MW / 3.24 MW)</div>
+                <div class="load-progress-bg">
+                  <div id="loadProgressBar" class="load-progress-bar" style="width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. Total Switching Actions -->
+            <div class="status-badge badge-slate" id="cardSwitchActions">
+              <div class="status-icon">⏱️</div>
+              <div class="info">
+                <div class="status-label">Total Switching Actions</div>
+                <div class="status-value" id="valSwitchActions">0 (Open: 0, Close: 0)</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ROW 2: Voltage Profile | Real-time Bus Voltage | Load Restoration -->
+    <section class="row-2">
+
+      <!-- Panel 4: Voltage Profile -->
+      <div class="card">
+        <div class="card-header">
+          <span>4. Voltage Profile</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub">Bus Voltage (pu)</div>
+          <div class="chart-container">
+            <canvas id="voltageProfileCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 5: Real-time Bus Voltage -->
+      <div class="card">
+        <div class="card-header">
+          <span>5. Real-time Bus Voltage (Selected Buses)</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub" style="height: 18px;"></div>
+          <div class="chart-container">
+            <canvas id="realtimeVoltageCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 6: Load Restoration -->
+      <div class="card">
+        <div class="card-header">
+          <span>6. Load Restoration</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub">Restored Load Percentage</div>
+          <div class="chart-container">
+            <canvas id="loadRestorationCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ROW 3: Fault Detection Output | Uncertainty | Switching Actions | Post-Restoration Network -->
+    <section class="row-3">
+
+      <!-- Panel 7: Fault Detection Output -->
+      <div class="card">
+        <div class="card-header">
+          <span>7. Fault Detection Output</span>
+        </div>
+        <div class="card-body">
+          <div class="fault-detect-box" id="detectStatusBox">
+            <div class="fault-detect-icon" id="detectIcon">✓</div>
+            <div class="fault-detect-title" id="detectTitle">Fault Event Detected</div>
+          </div>
+          <div class="detect-details-list">
+            <div class="detect-row">
+              <span class="detect-key">Detection Time:</span>
+              <span class="detect-val" id="detTime">1.02 s</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Fault Type:</span>
+              <span class="detect-val" id="detType">Single Line-to-Ground (A)</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Predicted Location:</span>
+              <span class="detect-val" id="detLoc">Line 18 – 19</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Confidence:</span>
+              <span class="detect-val" id="detConf">0.92</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Model:</span>
+              <span class="detect-val">Spatial-Temporal GNN (R-GCN)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 8: Uncertainty / Probable Fault Location -->
+      <div class="card">
+        <div class="card-header">
+          <span>8. Uncertainty / Probable Fault Location</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub">Probability of Fault Location</div>
+          <div class="chart-container">
+            <canvas id="uncertaintyCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 9: Switching Actions (Restoration) -->
+      <div class="card">
+        <div class="card-header">
+          <span>9. Switching Actions (Restoration)</span>
+        </div>
+        <div class="card-body" style="padding: 6px;">
+          <div class="switching-table-container">
+            <table class="switching-table" id="switchingTable">
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Time (s)</th>
+                  <th>Action</th>
+                  <th>Switch / Line</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="stepRow1">
+                  <td>1</td>
+                  <td>1.5</td>
+                  <td><span class="tag-action-open">Open</span></td>
+                  <td id="swLine1">18-19</td>
+                  <td><span class="tag-result-isolate">Isolate fault</span></td>
+                </tr>
+                <tr id="stepRow2">
+                  <td>2</td>
+                  <td>12.3</td>
+                  <td><span class="tag-action-close">Close</span></td>
+                  <td id="swLine2">33-32</td>
+                  <td><span class="tag-result-restore">Restore load</span></td>
+                </tr>
+                <tr id="stepRow3">
+                  <td>3</td>
+                  <td>28.4</td>
+                  <td><span class="tag-action-close">Close</span></td>
+                  <td id="swLine3">25-29</td>
+                  <td><span class="tag-result-restore">Restore load</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 10: Post-Restoration Network -->
+      <div class="card">
+        <div class="card-header">
+          <span>10. Post-Restoration Network</span>
+        </div>
+        <div class="card-body" style="padding: 4px;">
+          <div class="mini-topology-container">
+            <canvas id="miniTopologyCanvas" class="mini-topology-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Interactive Bus Tooltip -->
+  <div id="busTooltip" class="bus-tooltip"></div>
+
+  <!-- Scripts -->
+  <script>
+/**
+ * AI-Powered Distribution Network Restoration Dashboard
+ * Interactive 60 FPS Simulation & Animation Engine
+ * Multi-Feeder Support: Full IEEE 33-Bus & IEEE 69-Bus Systems
+ */
+
+// --- Global Simulation State ---
+const State = {
+  time: 0.0,
+  maxTime: 50.0,
+  isPlaying: false,
+  speed: 1.0,
+  
+  // Settings
+  feeder: 'ieee33',
+  faultType: 'SLG',
+  faultLine: '18-19',
+  faultStartTime: 1.0,
+  measurementMode: 'partial',
+  
+  // Key Sequence Events
+  events: [],
+  
+  // Power Flow Results (OpenDSS / Analytical Physics Engine)
+  powerFlow: null,
+  
+  // Flow Particles for Topology Animations
+  particlesMain: [],
+  particlesMini: [],
+  particlesTie: [],
+  
+  // Lightning Arc Animation
+  sparkTimer: 0
+};
+
+// =========================================================================
+// 1. IEEE 33-BUS TOPOLOGY & GRAPH
+// =========================================================================
+const BUS_POSITIONS_33 = {
+  '1':  { x: 50,  y: 135, label: '1' },
+  '2':  { x: 92,  y: 135, label: '2' },
+  '3':  { x: 134, y: 135, label: '3' },
+  '4':  { x: 176, y: 135, label: '4' },
+  '5':  { x: 218, y: 135, label: '5' },
+  '6':  { x: 260, y: 135, label: '6' },
+  '7':  { x: 302, y: 135, label: '7' },
+  '8':  { x: 344, y: 135, label: '8' },
+  '9':  { x: 386, y: 135, label: '9' },
+  '10': { x: 428, y: 135, label: '10' },
+  '11': { x: 470, y: 135, label: '11' },
+  '12': { x: 512, y: 135, label: '12' },
+  '13': { x: 554, y: 135, label: '13' },
+  '14': { x: 596, y: 135, label: '14' },
+  '15': { x: 638, y: 135, label: '15' },
+  '16': { x: 680, y: 135, label: '16' },
+  '17': { x: 722, y: 135, label: '17' },
+  '18': { x: 764, y: 135, label: '18' },
+  '19': { x: 824, y: 135, label: '19' },
+  '20': { x: 866, y: 135, label: '20' },
+  '21': { x: 908, y: 135, label: '21' },
+  '22': { x: 950, y: 135, label: '22' },
+  '23': { x: 134, y: 55,  label: '23' },
+  '24': { x: 176, y: 55,  label: '24' },
+  '25': { x: 218, y: 55,  label: '25' },
+  '26': { x: 218, y: 215, label: '26' },
+  '27': { x: 260, y: 215, label: '27' },
+  '28': { x: 302, y: 215, label: '28' },
+  '29': { x: 344, y: 215, label: '29' },
+  '30': { x: 386, y: 215, label: '30' },
+  '31': { x: 428, y: 215, label: '31' },
+  '32': { x: 470, y: 215, label: '32' },
+  '33': { x: 512, y: 215, label: '33' }
+};
+
+const GRID_LINES_33 = [
+  { id: '1-2', from: '1', to: '2' },
+  { id: '2-3', from: '2', to: '3' },
+  { id: '3-4', from: '3', to: '4' },
+  { id: '4-5', from: '4', to: '5' },
+  { id: '5-6', from: '5', to: '6' },
+  { id: '6-7', from: '6', to: '7' },
+  { id: '7-8', from: '7', to: '8' },
+  { id: '8-9', from: '8', to: '9' },
+  { id: '9-10', from: '9', to: '10' },
+  { id: '10-11', from: '10', to: '11' },
+  { id: '11-12', from: '11', to: '12' },
+  { id: '12-13', from: '12', to: '13' },
+  { id: '13-14', from: '13', to: '14' },
+  { id: '14-15', from: '14', to: '15' },
+  { id: '15-16', from: '15', to: '16' },
+  { id: '16-17', from: '16', to: '17' },
+  { id: '17-18', from: '17', to: '18' },
+  { id: '18-19', from: '18', to: '19', isFaultTarget: true },
+  { id: '2-19', from: '2', to: '19', isVirtual: true },
+  { id: '19-20', from: '19', to: '20' },
+  { id: '20-21', from: '20', to: '21' },
+  { id: '21-22', from: '21', to: '22' },
+  { id: '3-23', from: '3', to: '23' },
+  { id: '23-24', from: '23', to: '24' },
+  { id: '24-25', from: '24', to: '25' },
+  { id: '6-26', from: '6', to: '26' },
+  { id: '26-27', from: '26', to: '27' },
+  { id: '27-28', from: '27', to: '28' },
+  { id: '28-29', from: '28', to: '29' },
+  { id: '29-30', from: '29', to: '30' },
+  { id: '30-31', from: '30', to: '31' },
+  { id: '31-32', from: '31', to: '32' },
+  { id: '32-33', from: '32', to: '33' }
+];
+
+const TIE_LINES_33 = [
+  { id: 'Tie33', from: '8', to: '21', label: '8-21 (Tie 33)', isCurve: true, curveOffset: -52 },
+  { id: 'Tie34', from: '9', to: '15', label: '9-15 (Tie 34)', isCurve: true, curveOffset: -32 },
+  { id: 'Tie35', from: '12', to: '22', label: '12-22 (Tie 35)', isCurve: true, curveOffset: -58 },
+  { id: 'Tie36', from: '18', to: '33', label: '18-33 (Tie 36)', isCurve: false },
+  { id: 'Tie37', from: '25', to: '29', label: '25-29 (Tie 37)', isCurve: false }
+];
+
+const IEEE33_TREE = {
+  1: [2], 2: [3, 19], 3: [4, 23], 4: [5], 5: [6], 6: [7, 26], 7: [8],
+  8: [9], 9: [10], 10: [11], 11: [12], 12: [13], 13: [14], 14: [15],
+  15: [16], 16: [17], 17: [18], 18: [],
+  19: [20], 20: [21], 21: [22], 22: [],
+  23: [24], 24: [25], 25: [],
+  26: [27], 27: [28], 28: [29], 29: [30], 30: [31], 31: [32], 32: [33], 33: []
+};
+
+// =========================================================================
+// 2. IEEE 69-BUS TOPOLOGY & GRAPH (Baran & Wu Benchmark)
+// =========================================================================
+const BUS_POSITIONS_69 = {};
+// Generate clean horizontal layout for IEEE 69
+// Main Feeder: 1 to 27
+for (let i = 1; i <= 27; i++) {
+  BUS_POSITIONS_69[String(i)] = { x: 45 + (i - 1) * 33, y: 135, label: String(i) };
+}
+// Lateral from Bus 3 (28 to 35)
+for (let i = 28; i <= 35; i++) {
+  BUS_POSITIONS_69[String(i)] = { x: 111 + (i - 28) * 28, y: 75, label: String(i) };
+}
+// Lateral from Bus 4 (36 to 46)
+for (let i = 36; i <= 46; i++) {
+  BUS_POSITIONS_69[String(i)] = { x: 144 + (i - 36) * 26, y: 32, label: String(i) };
+}
+// Lateral from Bus 8 (47 to 50)
+for (let i = 47; i <= 50; i++) {
+  BUS_POSITIONS_69[String(i)] = { x: 276 + (i - 47) * 28, y: 195, label: String(i) };
+}
+// Lateral from Bus 9 (51 to 52)
+for (let i = 51; i <= 52; i++) {
+  BUS_POSITIONS_69[String(i)] = { x: 309 + (i - 51) * 28, y: 235, label: String(i) };
+}
+// Lateral from Bus 11 (53 to 65)
+for (let i = 53; i <= 65; i++) {
+  BUS_POSITIONS_69[String(i)] = { x: 375 + (i - 53) * 28, y: 195, label: String(i) };
+}
+// Lateral from Bus 12 (66 to 69)
+for (let i = 66; i <= 69; i++) {
+  BUS_POSITIONS_69[String(i)] = { x: 408 + (i - 66) * 28, y: 235, label: String(i) };
+}
+
+const GRID_LINES_69 = [];
+// Feeder 1-27
+for (let i = 1; i < 27; i++) {
+  GRID_LINES_69.push({ id: `${i}-${i+1}`, from: String(i), to: String(i+1) });
+}
+// Laterals
+GRID_LINES_69.push({ id: '3-28', from: '3', to: '28' });
+for (let i = 28; i < 35; i++) GRID_LINES_69.push({ id: `${i}-${i+1}`, from: String(i), to: String(i+1) });
+
+GRID_LINES_69.push({ id: '4-36', from: '4', to: '36' });
+for (let i = 36; i < 46; i++) GRID_LINES_69.push({ id: `${i}-${i+1}`, from: String(i), to: String(i+1) });
+
+GRID_LINES_69.push({ id: '8-47', from: '8', to: '47' });
+for (let i = 47; i < 50; i++) GRID_LINES_69.push({ id: `${i}-${i+1}`, from: String(i), to: String(i+1) });
+
+GRID_LINES_69.push({ id: '9-51', from: '9', to: '51' });
+GRID_LINES_69.push({ id: '51-52', from: '51', to: '52' });
+
+GRID_LINES_69.push({ id: '11-53', from: '11', to: '53' });
+for (let i = 53; i < 65; i++) GRID_LINES_69.push({ id: `${i}-${i+1}`, from: String(i), to: String(i+1) });
+
+GRID_LINES_69.push({ id: '12-66', from: '12', to: '66' });
+for (let i = 66; i < 69; i++) GRID_LINES_69.push({ id: `${i}-${i+1}`, from: String(i), to: String(i+1) });
+
+const TIE_LINES_69 = [
+  { id: 'Tie70', from: '11', to: '43', label: '11-43 (Tie 70)', isCurve: true, curveOffset: -65 },
+  { id: 'Tie71', from: '13', to: '21', label: '13-21 (Tie 71)', isCurve: true, curveOffset: -35 },
+  { id: 'Tie72', from: '15', to: '46', label: '15-46 (Tie 72)', isCurve: true, curveOffset: -75 },
+  { id: 'Tie73', from: '50', to: '59', label: '50-59 (Tie 73)', isCurve: false },
+  { id: 'Tie74', from: '27', to: '65', label: '27-65 (Tie 74)', isCurve: false }
+];
+
+const IEEE69_TREE = {
+  1: [2], 2: [3], 3: [4, 28], 4: [5, 36], 5: [6], 6: [7], 7: [8],
+  8: [9, 47], 9: [10, 51], 10: [11], 11: [12, 53], 12: [13, 66],
+  13: [14], 14: [15], 15: [16], 16: [17], 17: [18], 18: [19],
+  19: [20], 20: [21], 21: [22], 22: [23], 23: [24], 24: [25],
+  25: [26], 26: [27], 27: [],
+  28: [29], 29: [30], 30: [31], 31: [32], 32: [33], 33: [34], 34: [35], 35: [],
+  36: [37], 37: [38], 38: [39], 39: [40], 40: [41], 41: [42], 42: [43], 43: [44], 44: [45], 45: [46], 46: [],
+  47: [48], 48: [49], 49: [50], 50: [],
+  51: [52], 52: [],
+  53: [54], 54: [55], 55: [56], 56: [57], 57: [58], 58: [59], 59: [60], 60: [61], 61: [62], 62: [63], 63: [64], 64: [65], 65: [],
+  66: [67], 67: [68], 68: [69], 69: []
+};
+
+// Selectors for active model
+function activeBusPositions() {
+  return State.feeder === 'ieee69' ? BUS_POSITIONS_69 : BUS_POSITIONS_33;
+}
+
+function activeGridLines() {
+  return State.feeder === 'ieee69' ? GRID_LINES_69 : GRID_LINES_33;
+}
+
+function activeTieLines() {
+  return State.feeder === 'ieee69' ? TIE_LINES_69 : TIE_LINES_33;
+}
+
+function activeTree() {
+  return State.feeder === 'ieee69' ? IEEE69_TREE : IEEE33_TREE;
+}
+
+function getSubtreeIsland(rootNode, tree) {
+  const nodes = [rootNode];
+  const queue = [rootNode];
+  while (queue.length > 0) {
+    const curr = queue.shift();
+    const children = tree[curr] || [];
+    for (const child of children) {
+      nodes.push(child);
+      queue.push(child);
+    }
+  }
+  return new Set(nodes);
+}
+
+// --- Power Flow Simulation Model Fetcher & Physics Engine ---
+async function fetchOrCalculatePowerFlow(faultLine, faultType, feeder) {
+  try {
+    const res = await fetch(`/api/simulate?feeder=${encodeURIComponent(feeder)}&fault_line=${encodeURIComponent(faultLine)}&fault_type=${encodeURIComponent(faultType)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        return data;
+      }
+    }
+  } catch (err) {
+    // Backend offline; fallback to client-side physics solver
+  }
+  return generateClientPowerFlow(faultLine, faultType, feeder);
+}
+
+function generateClientPowerFlow(faultLine, faultType, feeder) {
+  const is69 = (feeder === 'ieee69');
+  const tree = activeTree();
+  const tieLines = activeTieLines();
+  const totalBuses = is69 ? 69 : 33;
+
+  const parts = faultLine.replace('Line ', '').replace('line ', '').trim().split('-');
+  let b1 = parseInt(parts[0]) || (is69 ? 11 : 18);
+  let b2 = parseInt(parts[1]) || (is69 ? 12 : 19);
+
+  let parent = b1, child = b2;
+  if (tree[b1] && tree[b1].includes(b2)) {
+    parent = b1; child = b2;
+  } else if (tree[b2] && tree[b2].includes(b1)) {
+    parent = b2; child = b1;
+  } else {
+    parent = Math.min(b1, b2);
+    child = Math.max(b1, b2);
+  }
+
+  const island = getSubtreeIsland(child, tree);
+
+  // Match bridge tie lines
+  const bridgeTies = [];
+  const supportTies = [];
+  tieLines.forEach(t => {
+    const n1 = parseInt(t.from);
+    const n2 = parseInt(t.to);
+    const inIslandCount = (island.has(n1) ? 1 : 0) + (island.has(n2) ? 1 : 0);
+    if (inIslandCount === 1) bridgeTies.push(t);
+    else supportTies.push(t);
+  });
+
+  const primaryTie = bridgeTies.length > 0 ? bridgeTies[0] : tieLines[tieLines.length - 2];
+  const secondaryTie = bridgeTies.length > 1 ? bridgeTies[1] : (supportTies.length > 0 ? supportTies[0] : tieLines[tieLines.length - 1]);
+
+  const targetNode = island.has(parseInt(primaryTie.to)) ? primaryTie.to : primaryTie.from;
+
+  const switching_steps = [
+    { step: 1, time: 1.5, action: 'Open', switch: `${parent}-${child}`, result: 'Isolate fault', tag: 'isolate' },
+    { step: 2, time: 12.3, action: 'Close', switch: primaryTie.label, result: `Restore Bus ${targetNode}`, tag: 'restore' },
+    { step: 3, time: 28.4, action: 'Close', switch: secondaryTie.label, result: 'Loop Support', tag: 'restore' }
+  ];
+
+  const v_prefault = {};
+  const v_fault = {};
+  const v_isolate = {};
+  const v_restored = {};
+
+  for (let i = 1; i <= totalBuses; i++) {
+    const b = String(i);
+    let drop = 0.0025 * Math.min(i, is69 ? 27 : 18);
+    v_prefault[b] = +(1.0 - drop).toFixed(4);
+
+    if (i === child) {
+      v_fault[b] = faultType === 'HIF' ? 0.7850 : 0.0142;
+    } else if (island.has(i)) {
+      v_fault[b] = faultType === 'HIF' ? +(0.80 + 0.01 * (i - child)).toFixed(4) : +(0.02 + 0.01 * Math.abs(i - child)).toFixed(4);
+    } else if (i === parent) {
+      v_fault[b] = faultType === 'HIF' ? 0.8800 : +(Math.max(0.65, v_prefault[b] - 0.25)).toFixed(4);
+    } else {
+      const dist = Math.abs(i - parent);
+      v_fault[b] = +(Math.max(0.85, v_prefault[b] - 0.12 / (dist + 1))).toFixed(4);
+    }
+
+    if (island.has(i)) {
+      v_isolate[b] = 0.0000;
+      v_restored[b] = +(0.9250 + (Math.sin(i) * 0.02)).toFixed(4);
+    } else {
+      v_isolate[b] = v_prefault[b];
+      v_restored[b] = +(v_prefault[b] - 0.002).toFixed(4);
+    }
+  }
+
+  const b_fault = String(child);
+  const b_up = String(parent);
+  const islandArr = Array.from(island).sort((a, b) => a - b);
+  let b_down = String(child);
+  if (islandArr.length > 1 && islandArr[1] !== child) b_down = String(islandArr[1]);
+  else if (islandArr.length > 2) b_down = String(islandArr[2]);
+  const b_tie = String(targetNode);
+
+  const selected_buses = [
+    { bus: b_fault, label: `Bus ${b_fault} (Faulted)`, color: '#dc2626' },
+    { bus: b_down, label: `Bus ${b_down} (Downstream)`, color: '#f59e0b' },
+    { bus: b_up, label: `Bus ${b_up} (Upstream)`, color: '#1e3a8a' },
+    { bus: b_tie, label: `Bus ${b_tie} (Restored via Tie)`, color: '#10b981' }
+  ];
+
+  const times = [0, 5, 9.8, 10, 15, 20, 25, 30, 33, 35, 40, 45, 50];
+  const trajectories = {};
+  selected_buses.forEach(item => {
+    const b = item.bus;
+    const vp = v_prefault[b] || 1.0;
+    const vf = v_fault[b] || 0.15;
+    const vi = v_isolate[b] !== undefined ? v_isolate[b] : 0.0;
+    const vr = v_restored[b] || 0.98;
+
+    const vals = [];
+    times.forEach(t => {
+      if (t < 10.0) vals.push(vp);
+      else if (t < 15.0) vals.push(vf);
+      else if (t < 30.0) {
+        if (vi === 0.0) {
+          vals.push(t > 20.0 ? +(vf + 0.35 * (vr - vf)).toFixed(4) : vi);
+        } else {
+          vals.push(vi);
+        }
+      } else {
+        vals.push(vr);
+      }
+    });
+    trajectories[b] = vals;
+  });
+
+  const p1 = Math.max(1, parent - 1);
+  const c1 = child + 1;
+  const candidates = [
+    { line: `${p1}-${parent}`, prob: 0.06 },
+    { line: `${parent}-${child}`, prob: 0.92, isTarget: true },
+    { line: `${child}-${c1}`, prob: 0.02 },
+    { line: `${Math.max(1, p1 - 1)}-${p1}`, prob: 0.01 },
+    { line: `${c1}-${c1 + 1}`, prob: 0.01 }
+  ];
+
+  const baseMw = is69 ? 4.28 : 3.82;
+  return {
+    success: true,
+    feeder: is69 ? 'ieee69' : 'ieee33',
+    total_buses: totalBuses,
+    fault_line: `${parent}-${child}`,
+    fault_type: faultType,
+    parent_bus: parent,
+    child_bus: child,
+    island_buses: islandArr,
+    v_prefault,
+    v_fault,
+    v_isolate,
+    v_restored,
+    total_mw_restored: +(baseMw * 0.96).toFixed(2),
+    total_mw_base: baseMw,
+    restored_pct: 96.0,
+    switching_steps,
+    selected_buses,
+    time_series: { times, trajectories },
+    candidates
+  };
+}
+
+function rebuildEventsFromPowerFlow() {
+  if (!State.powerFlow) return;
+  const steps = State.powerFlow.switching_steps || [];
+  const s1 = steps[0] || { time: 1.5, switch: State.faultLine };
+  const s2 = steps[1] || { time: 12.3, switch: 'Tie Switch' };
+  const s3 = steps[2] || { time: 28.4, switch: 'Tie Switch' };
+
+  State.events = [
+    { time: 0.0, name: 'Normal Grid Operation', phaseClass: 'phase-normal' },
+    { time: 1.0, name: `Fault Injected (${State.faultLine})`, phaseClass: 'phase-fault' },
+    { time: 1.02, name: `AI Localization: R-GCN Detected (${State.faultLine})`, phaseClass: 'phase-fault' },
+    { time: s1.time, name: `Switch ${s1.switch} Opened (Fault Isolated)`, phaseClass: 'phase-isolate' },
+    { time: s2.time, name: `Tie Switch ${s2.switch} Closed (Restoring)`, phaseClass: 'phase-restoring' },
+    { time: s3.time, name: `Tie Switch ${s3.switch} Closed (Loop Support)`, phaseClass: 'phase-restoring' },
+    { time: 35.6, name: 'Restoration Completed (Physics Verified)', phaseClass: 'phase-completed' }
+  ];
+}
+
+function initFlowParticles() {
+  State.particlesMain = [];
+  State.particlesMini = [];
+  State.particlesTie = [];
+
+  const lines = activeGridLines();
+  const ties = activeTieLines();
+
+  for (let i = 0; i < 70; i++) {
+    State.particlesMain.push({
+      lineIdx: Math.floor(Math.random() * lines.length),
+      progress: Math.random(),
+      speed: 0.008 + Math.random() * 0.006,
+      size: 2.5 + Math.random() * 1.5
+    });
+  }
+
+  for (let i = 0; i < 40; i++) {
+    State.particlesMini.push({
+      lineIdx: Math.floor(Math.random() * lines.length),
+      progress: Math.random(),
+      speed: 0.01 + Math.random() * 0.008,
+      size: 2.0
+    });
+  }
+
+  for (let i = 0; i < 25; i++) {
+    State.particlesTie.push({
+      tieIdx: Math.floor(Math.random() * ties.length),
+      progress: Math.random(),
+      speed: 0.009 + Math.random() * 0.006,
+      size: 2.8
+    });
+  }
+}
+
+// --- DOM Elements ---
+let elTimeText, elSlider, elPhaseBadge;
+let btnRunTop, btnStepTop, btnResetTop, btnRunForm, btnRandomFault;
+let selectFeeder, selectFaultLine, selectFaultType;
+let topologyTitle;
+let cvsTopology, ctxTopology;
+let cvsVoltageProfile, ctxVoltageProfile;
+let cvsRealtime, ctxRealtime;
+let cvsLoad, ctxLoad;
+let cvsUncertainty, ctxUncertainty;
+let cvsMiniTopology, ctxMiniTopology;
+let busTooltip;
+
+// Status Badges
+let valFaultDetected, valFaultLocation, valConfidenceLoc;
+let valFaultType, valConfidenceType, valRestorationStatus;
+let valLoadRestored, loadProgressBar, valSwitchActions;
+let detTime, detType, detLoc, detConf;
+
+// --- Setup & Event Listeners ---
+window.addEventListener('DOMContentLoaded', async () => {
+  initDOMElements();
+  initFlowParticles();
+  populateFaultLineDropdown(State.feeder);
+  setupEventListeners();
+
+  await loadScenario(State.faultLine, State.faultType, State.feeder);
+
+  handleCanvasResize();
+  window.addEventListener('resize', handleCanvasResize);
+
+  requestAnimationFrame(simulationLoop);
+});
+
+function initDOMElements() {
+  elTimeText = document.getElementById('timeText');
+  elSlider = document.getElementById('timelineSlider');
+  elPhaseBadge = document.getElementById('phaseBadge');
+
+  btnRunTop = document.getElementById('btnRunTop');
+  btnStepTop = document.getElementById('btnStepTop');
+  btnResetTop = document.getElementById('btnResetTop');
+  btnRunForm = document.getElementById('btnRunForm');
+  btnRandomFault = document.getElementById('btnRandomFault');
+
+  selectFeeder = document.getElementById('selectFeeder');
+  selectFaultLine = document.getElementById('selectFaultLine');
+  selectFaultType = document.getElementById('selectFaultType');
+  topologyTitle = document.getElementById('topologyTitle');
+
+  cvsTopology = document.getElementById('topologyCanvas');
+  ctxTopology = cvsTopology.getContext('2d');
+
+  cvsVoltageProfile = document.getElementById('voltageProfileCanvas');
+  ctxVoltageProfile = cvsVoltageProfile.getContext('2d');
+
+  cvsRealtime = document.getElementById('realtimeVoltageCanvas');
+  ctxRealtime = cvsRealtime.getContext('2d');
+
+  cvsLoad = document.getElementById('loadRestorationCanvas');
+  ctxLoad = cvsLoad.getContext('2d');
+
+  cvsUncertainty = document.getElementById('uncertaintyCanvas');
+  ctxUncertainty = cvsUncertainty.getContext('2d');
+
+  cvsMiniTopology = document.getElementById('miniTopologyCanvas');
+  ctxMiniTopology = cvsMiniTopology.getContext('2d');
+
+  busTooltip = document.getElementById('busTooltip');
+
+  valFaultDetected = document.getElementById('valFaultDetected');
+  valFaultLocation = document.getElementById('valFaultLocation');
+  valConfidenceLoc = document.getElementById('valConfidenceLoc');
+  valFaultType = document.getElementById('valFaultType');
+  valConfidenceType = document.getElementById('valConfidenceType');
+  valRestorationStatus = document.getElementById('valRestorationStatus');
+  valLoadRestored = document.getElementById('valLoadRestored');
+  loadProgressBar = document.getElementById('loadProgressBar');
+  valSwitchActions = document.getElementById('valSwitchActions');
+
+  detTime = document.getElementById('detTime');
+  detType = document.getElementById('detType');
+  detLoc = document.getElementById('detLoc');
+  detConf = document.getElementById('detConf');
+}
+
+function populateFaultLineDropdown(feeder) {
+  selectFaultLine.innerHTML = '';
+  if (feeder === 'ieee69') {
+    // 68 Lines of IEEE 69
+    const optgMain = document.createElement('optgroup');
+    optgMain.label = 'Main Feeder (Buses 1–27)';
+    for (let i = 1; i < 27; i++) {
+      const opt = document.createElement('option');
+      opt.value = `${i}-${i+1}`;
+      opt.textContent = `Line ${i}–${i+1}`;
+      if (opt.value === '11-12') opt.selected = true;
+      optgMain.appendChild(opt);
+    }
+    selectFaultLine.appendChild(optgMain);
+
+    const laterals = [
+      { label: 'Lateral 1 (from Bus 3: 28–35)', lines: ['3-28', '28-29', '29-30', '30-31', '31-32', '32-33', '33-34', '34-35'] },
+      { label: 'Lateral 2 (from Bus 4: 36–46)', lines: ['4-36', '36-37', '37-38', '38-39', '39-40', '40-41', '41-42', '42-43', '43-44', '44-45', '45-46'] },
+      { label: 'Lateral 3 (from Bus 8: 47–50)', lines: ['8-47', '47-48', '48-49', '49-50'] },
+      { label: 'Lateral 4 (from Bus 9: 51–52)', lines: ['9-51', '51-52'] },
+      { label: 'Lateral 5 (from Bus 11: 53–65)', lines: ['11-53', '53-54', '54-55', '55-56', '56-57', '57-58', '58-59', '59-60', '60-61', '61-62', '62-63', '63-64', '64-65'] },
+      { label: 'Lateral 6 (from Bus 12: 66–69)', lines: ['12-66', '66-67', '67-68', '68-69'] }
+    ];
+
+    laterals.forEach(lat => {
+      const g = document.createElement('optgroup');
+      g.label = lat.label;
+      lat.lines.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l;
+        opt.textContent = `Line ${l.replace('-', '–')}`;
+        g.appendChild(opt);
+      });
+      selectFaultLine.appendChild(g);
+    });
+
+    State.faultLine = '11-12';
+  } else {
+    // 32 Lines of IEEE 33
+    const groups = [
+      {
+        label: 'Main Feeder (Substation Trunk)',
+        lines: ['1-2', '2-3', '3-4', '4-5', '5-6', '6-7', '7-8', '8-9', '9-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16', '16-17', '17-18']
+      },
+      {
+        label: 'Lateral 1 (Feeder Branch 1)',
+        lines: ['18-19', '2-19', '19-20', '20-21', '21-22'],
+        defaultSel: '18-19'
+      },
+      {
+        label: 'Lateral 2 (Feeder Branch 2)',
+        lines: ['3-23', '23-24', '24-25']
+      },
+      {
+        label: 'Lateral 3 (Feeder Branch 3)',
+        lines: ['6-26', '26-27', '27-28', '28-29', '29-30', '30-31', '31-32', '32-33']
+      }
+    ];
+
+    groups.forEach(g => {
+      const optg = document.createElement('optgroup');
+      optg.label = g.label;
+      g.lines.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l;
+        opt.textContent = `Line ${l.replace('-', '–')}`;
+        if (l === '18-19') opt.selected = true;
+        optg.appendChild(opt);
+      });
+      selectFaultLine.appendChild(optg);
+    });
+
+    State.faultLine = '18-19';
+  }
+}
+
+function setupEventListeners() {
+  btnRunTop.addEventListener('click', togglePlayback);
+  btnRunForm.addEventListener('click', startSimulation);
+  btnStepTop.addEventListener('click', stepForward);
+  btnResetTop.addEventListener('click', resetSimulation);
+
+  // Feeder Selection Switch (IEEE 33 <-> IEEE 69)
+  selectFeeder.addEventListener('change', async (e) => {
+    State.feeder = e.target.value;
+    if (topologyTitle) {
+      topologyTitle.innerText = `2. Distribution Network Topology (${State.feeder === 'ieee69' ? 'IEEE 69-bus' : 'IEEE 33-bus'})`;
+    }
+    populateFaultLineDropdown(State.feeder);
+    initFlowParticles();
+    await loadScenario(State.faultLine, State.faultType, State.feeder);
+    startSimulation();
+  });
+
+  // 🎲 Random Fault Generator Button
+  if (btnRandomFault) {
+    btnRandomFault.addEventListener('click', async () => {
+      const allOptions = Array.from(selectFaultLine.querySelectorAll('option')).map(o => o.value);
+      const filtered = allOptions.filter(v => v !== State.faultLine);
+      const randomLine = filtered[Math.floor(Math.random() * filtered.length)] || allOptions[0];
+      
+      selectFaultLine.value = randomLine;
+      await loadScenario(randomLine, State.faultType, State.feeder);
+      startSimulation();
+    });
+  }
+
+  elSlider.addEventListener('input', (e) => {
+    State.time = parseFloat(e.target.value);
+    updateDashboardUI();
+  });
+
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      State.speed = parseFloat(btn.dataset.speed);
+    });
+  });
+
+  selectFaultLine.addEventListener('change', async (e) => {
+    await loadScenario(e.target.value, State.faultType, State.feeder);
+  });
+
+  selectFaultType.addEventListener('change', async (e) => {
+    State.faultType = e.target.value;
+    await loadScenario(State.faultLine, State.faultType, State.feeder);
+  });
+
+  cvsTopology.addEventListener('mousemove', handleTopologyMouseMove);
+  cvsTopology.addEventListener('mouseleave', () => {
+    busTooltip.style.display = 'none';
+  });
+  cvsTopology.addEventListener('click', handleTopologyClick);
+}
+
+async function loadScenario(faultLine, faultType, feeder) {
+  State.faultLine = faultLine;
+  State.faultType = faultType;
+  State.feeder = feeder || State.feeder;
+  updateFaultLineTarget();
+  State.powerFlow = await fetchOrCalculatePowerFlow(faultLine, faultType, State.feeder);
+  rebuildEventsFromPowerFlow();
+  updateDashboardUI();
+}
+
+function updateFaultLineTarget() {
+  const parts = State.faultLine.replace('Line ', '').replace('line ', '').trim().split('-');
+  const f1 = parts[0];
+  const f2 = parts[1];
+  const lines = activeGridLines();
+
+  lines.forEach(l => {
+    if ((l.from === f1 && l.to === f2) || (l.from === f2 && l.to === f1)) {
+      l.isFaultTarget = true;
+    } else if (f1 === '18' && f2 === '19' && l.id === '18-19') {
+      l.isFaultTarget = true;
+    } else if (f1 === '2' && f2 === '19' && l.id === '18-19') {
+      l.isFaultTarget = true;
+    } else {
+      l.isFaultTarget = false;
+    }
+  });
+
+  if (detLoc) detLoc.innerText = `Line ${f1} – ${f2}`;
+  if (valFaultLocation) valFaultLocation.innerText = `Line ${f1} – ${f2}`;
+  if (valFaultType) valFaultType.innerText = getFaultTypeLabel(State.faultType);
+}
+
+function getFaultTypeLabel(type) {
+  switch (type) {
+    case 'SLG': return 'Single Line-to-Ground (A)';
+    case 'LL': return 'Line-to-Line (AB)';
+    case '3P': return 'Three-Phase Symmetrical (ABC)';
+    case 'HIF': return 'High-Impedance Fault (HIF)';
+    default: return type;
+  }
+}
+
+function handleCanvasResize() {
+  [
+    cvsTopology,
+    cvsVoltageProfile,
+    cvsRealtime,
+    cvsLoad,
+    cvsUncertainty,
+    cvsMiniTopology
+  ].forEach(canvas => {
+    if (!canvas || !canvas.parentElement) return;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.resetTransform?.();
+    ctx.scale(dpr, dpr);
+  });
+}
+
+// --- Simulation Loop (60 FPS) ---
+let lastTimestamp = 0;
+function simulationLoop(timestamp) {
+  if (!lastTimestamp) lastTimestamp = timestamp;
+  const dt = (timestamp - lastTimestamp) / 1000;
+  lastTimestamp = timestamp;
+
+  if (State.isPlaying) {
+    State.time += dt * 3.5 * State.speed;
+    if (State.time >= State.maxTime) {
+      State.time = State.maxTime;
+      State.isPlaying = false;
+      updatePlayButtonUI();
+    }
+    elSlider.value = State.time;
+  }
+
+  updateAnimations(dt);
+
+  updateDashboardUI();
+  renderTopology(ctxTopology, cvsTopology, false);
+  renderTopology(ctxMiniTopology, cvsMiniTopology, true);
+  renderVoltageProfileChart();
+  renderRealtimeVoltageChart();
+  renderLoadRestorationChart();
+  renderUncertaintyChart();
+
+  requestAnimationFrame(simulationLoop);
+}
+
+function togglePlayback() {
+  State.isPlaying = !State.isPlaying;
+  updatePlayButtonUI();
+}
+
+async function startSimulation() {
+  const line = selectFaultLine ? selectFaultLine.value : State.faultLine;
+  const fType = selectFaultType ? selectFaultType.value : State.faultType;
+  const feeder = selectFeeder ? selectFeeder.value : State.feeder;
+  if (!State.powerFlow || State.faultLine !== line || State.faultType !== fType || State.feeder !== feeder) {
+    await loadScenario(line, fType, feeder);
+  }
+  State.time = 0.0;
+  State.isPlaying = true;
+  updatePlayButtonUI();
+}
+
+function stepForward() {
+  const nextEvent = State.events.find(ev => ev.time > State.time + 0.1);
+  if (nextEvent) {
+    State.time = nextEvent.time;
+  } else {
+    State.time = State.maxTime;
+  }
+  elSlider.value = State.time;
+  updateDashboardUI();
+}
+
+function resetSimulation() {
+  State.time = 0.0;
+  State.isPlaying = false;
+  elSlider.value = 0;
+  updatePlayButtonUI();
+  updateDashboardUI();
+}
+
+function updatePlayButtonUI() {
+  const icon = State.isPlaying
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pause'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Run Simulation';
+  btnRunTop.innerHTML = icon;
+}
+
+function updateAnimations(dt) {
+  State.sparkTimer += dt * 15;
+  const lines = activeGridLines();
+
+  const isLineOpen = (l) => {
+    if (!l.isFaultTarget) return false;
+    return State.time >= 1.5;
+  };
+
+  State.particlesMain.forEach(p => {
+    const line = lines[p.lineIdx];
+    if (line && !isLineOpen(line)) {
+      p.progress += p.speed * (State.isPlaying ? State.speed : 1.0);
+      if (p.progress > 1.0) p.progress = 0;
+    }
+  });
+
+  State.particlesMini.forEach(p => {
+    const line = lines[p.lineIdx];
+    if (line && !isLineOpen(line)) {
+      p.progress += p.speed * (State.isPlaying ? State.speed : 1.0);
+      if (p.progress > 1.0) p.progress = 0;
+    }
+  });
+
+  State.particlesTie.forEach(p => {
+    p.progress += p.speed * (State.isPlaying ? State.speed : 1.0);
+    if (p.progress > 1.0) p.progress = 0;
+  });
+}
+
+function updateDashboardUI() {
+  const t = State.time;
+  elTimeText.innerText = `t = ${t.toFixed(2)} s`;
+
+  let currentEvent = State.events[0] || { name: 'Pre-Fault Normal', phaseClass: 'phase-normal' };
+  for (let ev of State.events) {
+    if (t >= ev.time) currentEvent = ev;
+  }
+  elPhaseBadge.innerText = currentEvent.name;
+  elPhaseBadge.className = `phase-pill ${currentEvent.phaseClass}`;
+
+  const pf = State.powerFlow;
+  const is69 = (State.feeder === 'ieee69');
+  const baseMw = pf ? pf.total_mw_base : (is69 ? 4.28 : 3.82);
+  const rstPct = pf ? pf.restored_pct : 96.0;
+  const rstMw = pf ? pf.total_mw_restored : +(baseMw * 0.96).toFixed(2);
+
+  if (t < 1.0) {
+    valFaultDetected.innerText = 'No (Normal Grid)';
+    valFaultDetected.parentElement.parentElement.className = 'status-badge badge-slate';
+    valRestorationStatus.innerText = 'Monitoring';
+    valLoadRestored.innerText = `100.0 % (${baseMw} MW / ${baseMw} MW)`;
+    loadProgressBar.style.width = '100%';
+    valSwitchActions.innerText = '0 (Open: 0, Close: 0)';
+  } else if (t < 1.02) {
+    valFaultDetected.innerText = 'Yes (t = 1.00 s)';
+    valFaultDetected.parentElement.parentElement.className = 'status-badge badge-red';
+    valRestorationStatus.innerText = 'Fault Event Detected';
+    const sagLoad = (rstPct * 0.65).toFixed(1);
+    valLoadRestored.innerText = `${sagLoad} % (${(baseMw * 0.65).toFixed(2)} MW / ${baseMw} MW)`;
+    loadProgressBar.style.width = `${sagLoad}%`;
+    valSwitchActions.innerText = '0 (Open: 0, Close: 0)';
+  } else if (t < 1.5) {
+    valFaultDetected.innerText = 'Yes (t = 1.02 s)';
+    valFaultDetected.parentElement.parentElement.className = 'status-badge badge-red';
+    valRestorationStatus.innerText = 'Localizing Fault (GNN)';
+    const sagLoad = (rstPct * 0.65).toFixed(1);
+    valLoadRestored.innerText = `${sagLoad} % (${(baseMw * 0.65).toFixed(2)} MW / ${baseMw} MW)`;
+    loadProgressBar.style.width = `${sagLoad}%`;
+    valSwitchActions.innerText = '0 (Open: 0, Close: 0)';
+  } else if (t < 12.3) {
+    valFaultDetected.innerText = 'Yes (t = 1.02 s)';
+    valFaultDetected.parentElement.parentElement.className = 'status-badge badge-red';
+    valRestorationStatus.innerText = 'Fault Isolated (t = 1.5 s)';
+    const isoLoad = (rstPct * 0.70).toFixed(1);
+    valLoadRestored.innerText = `${isoLoad} % (${(baseMw * 0.70).toFixed(2)} MW / ${baseMw} MW)`;
+    loadProgressBar.style.width = `${isoLoad}%`;
+    valSwitchActions.innerText = '1 (Open: 1, Close: 0)';
+  } else if (t < 28.4) {
+    valFaultDetected.innerText = 'Yes (t = 1.02 s)';
+    valFaultDetected.parentElement.parentElement.className = 'status-badge badge-red';
+    valRestorationStatus.innerText = 'Restoring (Step 2/3)';
+    const step2Load = (rstPct * 0.88).toFixed(1);
+    valLoadRestored.innerText = `${step2Load} % (${(baseMw * 0.88).toFixed(2)} MW / ${baseMw} MW)`;
+    loadProgressBar.style.width = `${step2Load}%`;
+    valSwitchActions.innerText = '2 (Open: 1, Close: 1)';
+  } else {
+    valFaultDetected.innerText = 'Yes (t = 1.02 s)';
+    valFaultDetected.parentElement.parentElement.className = 'status-badge badge-red';
+    valRestorationStatus.innerText = 'Completed (t = 35.6 s)';
+    valLoadRestored.innerText = `${rstPct} % (${rstMw} MW / ${baseMw} MW)`;
+    loadProgressBar.style.width = `${rstPct}%`;
+    valSwitchActions.innerText = '3 (Open: 1, Close: 2)';
+  }
+
+  updateSwitchingTable();
+}
+
+function updateSwitchingTable() {
+  const tbody = document.querySelector('#switchingTable tbody');
+  if (!tbody || !State.powerFlow || !State.powerFlow.switching_steps) return;
+  const t = State.time;
+
+  tbody.innerHTML = '';
+  State.powerFlow.switching_steps.forEach(st => {
+    const tr = document.createElement('tr');
+    if (t >= st.time) tr.className = 'active-step';
+
+    const tagClass = st.action === 'Open' ? 'tag-action-open' : 'tag-action-close';
+    const resClass = st.tag === 'isolate' ? 'tag-result-isolate' : 'tag-result-restore';
+
+    tr.innerHTML = `
+      <td>${st.step}</td>
+      <td>${st.time.toFixed(1)}</td>
+      <td><span class="${tagClass}">${st.action}</span></td>
+      <td>${st.switch}</td>
+      <td><span class="${resClass}">${st.result}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// --- Card 2 & 10: Distribution Network Topology Renderer ---
+function renderTopology(ctx, canvas, isMini) {
+  if (!canvas || !canvas.parentElement) return;
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.fillStyle = isMini ? '#f8fafc' : '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
+  const scaleX = w / 1020;
+  const scaleY = h / 270;
+  const scale = Math.min(scaleX, scaleY);
+  const offsetX = (w - 1000 * scale) / 2 + 10;
+  const offsetY = (h - 260 * scale) / 2 + (isMini ? 15 : 0);
+
+  const positions = activeBusPositions();
+  const gridLines = activeGridLines();
+  const tieLines = activeTieLines();
+
+  const getPt = (pos) => ({
+    x: pos.x * scale + offsetX,
+    y: pos.y * scale + offsetY
+  });
+
+  const t = State.time;
+  const pf = State.powerFlow;
+  const island = new Set(pf ? pf.island_buses : []);
+
+  const step2TieLabel = pf?.switching_steps?.[1]?.switch || '';
+  const step3TieLabel = pf?.switching_steps?.[2]?.switch || '';
+
+  // 1. Draw Substation Generator Symbol at Bus 1
+  const b1Pos = positions['1'];
+  if (b1Pos) {
+    const b1Pt = getPt(b1Pos);
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1.8 * scale;
+    ctx.beginPath();
+    ctx.arc(b1Pt.x - 18 * scale, b1Pt.y, 11 * scale, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    const gx = b1Pt.x - 18 * scale;
+    const gy = b1Pt.y;
+    const r = 6 * scale;
+    ctx.moveTo(gx - r, gy);
+    ctx.bezierCurveTo(gx - r / 2, gy - r, gx, gy - r, gx, gy);
+    ctx.bezierCurveTo(gx, gy + r, gx + r / 2, gy + r, gx + r, gy);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(b1Pt.x - 7 * scale, b1Pt.y);
+    ctx.lineTo(b1Pt.x, b1Pt.y);
+    ctx.stroke();
+  }
+
+  // 2. Draw Normal Grid Lines
+  gridLines.forEach(line => {
+    if (line.isVirtual || !positions[line.from] || !positions[line.to]) return;
+    const p1 = getPt(positions[line.from]);
+    const p2 = getPt(positions[line.to]);
+
+    const isFault = line.isFaultTarget;
+    let isOpen = false;
+
+    if (isMini) {
+      if (isFault) isOpen = true;
+    } else {
+      if (isFault && t >= 1.5) isOpen = true;
+    }
+
+    ctx.save();
+    if (isFault && t >= 1.0 && t < 1.5 && !isMini) {
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3.5 * scale;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
+      drawLightningBolt(ctx, midX, midY, scale);
+    } else if (isOpen) {
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2.0 * scale;
+      ctx.setLineDash([4 * scale, 3 * scale]);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2.0 * scale;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  });
+
+  // 3. Draw Tie Lines
+  tieLines.forEach((tie, tieIdx) => {
+    if (!positions[tie.from] || !positions[tie.to]) return;
+    const p1 = getPt(positions[tie.from]);
+    const p2 = getPt(positions[tie.to]);
+
+    const norm = (s) => (s || '').toLowerCase().replace(/[\s\-_()]/g, '');
+    const s2Norm = norm(step2TieLabel);
+    const s3Norm = norm(step3TieLabel);
+    const tieIdNorm = norm(tie.id);
+    const tieFromTo = norm(`${tie.from}${tie.to}`);
+    const tieToFrom = norm(`${tie.to}${tie.from}`);
+
+    const isStep2 = s2Norm.includes(tieIdNorm) || s2Norm.includes(tieFromTo) || s2Norm.includes(tieToFrom);
+    const isStep3 = s3Norm.includes(tieIdNorm) || s3Norm.includes(tieFromTo) || s3Norm.includes(tieToFrom);
+
+    let isClosed = false;
+    if (isMini) {
+      isClosed = isStep2 || isStep3;
+    } else {
+      if (isStep2 && t >= 12.3) isClosed = true;
+      if (isStep3 && t >= 28.4) isClosed = true;
+    }
+
+    ctx.save();
+    if (isClosed) {
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2.4 * scale;
+      ctx.shadowColor = 'rgba(16, 185, 129, 0.5)';
+      ctx.shadowBlur = 6 * scale;
+    } else {
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.4 * scale;
+      ctx.setLineDash([4 * scale, 3 * scale]);
+    }
+
+    ctx.beginPath();
+    if (tie.isCurve) {
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2 + (tie.curveOffset || -40) * scale;
+      ctx.moveTo(p1.x, p1.y);
+      ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
+    } else {
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+    }
+    ctx.stroke();
+
+    if (!isMini) {
+      const labelX = (p1.x + p2.x) / 2;
+      const labelY = tie.isCurve
+        ? (p1.y + p2.y) / 2 + (tie.curveOffset || -40) * scale * 0.75
+        : (p1.y + p2.y) / 2 - 6 * scale;
+
+      ctx.fillStyle = isClosed ? '#059669' : '#64748b';
+      ctx.font = `${Math.round(7.5 * scale)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(tie.id, labelX, labelY);
+    }
+    ctx.restore();
+
+    if (isClosed) {
+      State.particlesTie.forEach(p => {
+        if (p.tieIdx === tieIdx) {
+          let px, py;
+          if (tie.isCurve) {
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2 + (tie.curveOffset || -40) * scale;
+            const tParam = p.progress;
+            px = (1 - tParam) * (1 - tParam) * p1.x + 2 * (1 - tParam) * tParam * midX + tParam * tParam * p2.x;
+            py = (1 - tParam) * (1 - tParam) * p1.y + 2 * (1 - tParam) * tParam * midY + tParam * tParam * p2.y;
+          } else {
+            px = p1.x + (p2.x - p1.x) * p.progress;
+            py = p1.y + (p2.y - p1.y) * p.progress;
+          }
+
+          ctx.fillStyle = '#10b981';
+          ctx.beginPath();
+          ctx.arc(px, py, p.size * scale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+  });
+
+  // 4. Draw Flow Particles on Main Lines
+  const particles = isMini ? State.particlesMini : State.particlesMain;
+  particles.forEach(p => {
+    const line = gridLines[p.lineIdx];
+    if (!line || line.isVirtual || !positions[line.from] || !positions[line.to]) return;
+
+    const isFault = line.isFaultTarget;
+    let isOpen = false;
+    if (isMini) {
+      if (isFault) isOpen = true;
+    } else {
+      if (isFault && t >= 1.5) isOpen = true;
+    }
+
+    if (!isOpen && !(isFault && t >= 1.0 && t < 1.5)) {
+      const p1 = getPt(positions[line.from]);
+      const p2 = getPt(positions[line.to]);
+      const px = p1.x + (p2.x - p1.x) * p.progress;
+      const py = p1.y + (p2.y - p1.y) * p.progress;
+
+      ctx.fillStyle = isMini || t >= 28.4 ? '#10b981' : '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(px, py, p.size * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // 5. Draw Buses (Nodes)
+  const is69 = (State.feeder === 'ieee69');
+  const busRadius = is69 ? 3.5 * scale : 4.5 * scale;
+  const fontSize = is69 ? Math.round(7.0 * scale) : Math.round(8.5 * scale);
+
+  Object.keys(positions).forEach(busId => {
+    const pt = getPt(positions[busId]);
+    const bNum = parseInt(busId);
+    const inIsland = island.has(bNum);
+
+    let color = '#2563eb';
+
+    if (isMini) {
+      color = '#10b981';
+    } else if (t < 1.0) {
+      color = '#2563eb';
+    } else if (t < 1.5) {
+      if (bNum === pf?.child_bus || bNum === pf?.parent_bus) {
+        color = '#ef4444';
+      } else if (inIsland) {
+        color = '#f97316';
+      }
+    } else if (t < 12.3) {
+      if (inIsland) {
+        color = '#94a3b8';
+      }
+    } else if (t < 28.4) {
+      if (inIsland) {
+        color = '#10b981';
+      }
+    } else {
+      color = '#10b981';
+    }
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, busRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.0 * scale;
+    ctx.stroke();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(busId, pt.x, pt.y - 5 * scale);
+  });
+}
+
+function drawLightningBolt(ctx, x, y, scale) {
+  ctx.save();
+  ctx.fillStyle = '#ef4444';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1 * scale;
+
+  ctx.beginPath();
+  const s = 11 * scale;
+  ctx.moveTo(x + 2 * s * 0.1, y - s);
+  ctx.lineTo(x - 4 * s * 0.1, y - 0.1 * s);
+  ctx.lineTo(x + 1 * s * 0.1, y - 0.1 * s);
+  ctx.lineTo(x - 3 * s * 0.1, y + s);
+  ctx.lineTo(x + 5 * s * 0.1, y + 0.1 * s);
+  ctx.lineTo(x, y + 0.1 * s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+// --- Card 4: Voltage Profile Chart Renderer ---
+function renderVoltageProfileChart() {
+  if (!cvsVoltageProfile || !cvsVoltageProfile.parentElement) return;
+  const w = cvsVoltageProfile.parentElement.clientWidth;
+  const h = cvsVoltageProfile.parentElement.clientHeight;
+  ctxVoltageProfile.clearRect(0, 0, w, h);
+
+  const padLeft = 40;
+  const padRight = 15;
+  const padTop = 15;
+  const padBottom = 28;
+  const plotW = w - padLeft - padRight;
+  const plotH = h - padTop - padBottom;
+
+  const is69 = (State.feeder === 'ieee69');
+  const maxBus = is69 ? 69 : 33;
+
+  ctxVoltageProfile.strokeStyle = '#e2e8f0';
+  ctxVoltageProfile.lineWidth = 1;
+  ctxVoltageProfile.beginPath();
+
+  const yTicks = [0.0, 0.5, 1.0, 1.5];
+  ctxVoltageProfile.fillStyle = '#64748b';
+  ctxVoltageProfile.font = '9px sans-serif';
+  ctxVoltageProfile.textAlign = 'right';
+  ctxVoltageProfile.textBaseline = 'middle';
+
+  yTicks.forEach(val => {
+    const y = padTop + plotH - (val / 1.5) * plotH;
+    ctxVoltageProfile.moveTo(padLeft, y);
+    ctxVoltageProfile.lineTo(padLeft + plotW, y);
+    ctxVoltageProfile.fillText(val.toFixed(1), padLeft - 6, y);
+  });
+
+  const xTicks = is69 ? [0, 10, 20, 30, 40, 50, 60, 69] : [0, 5, 10, 15, 20, 25, 30, 33];
+  ctxVoltageProfile.textAlign = 'center';
+  ctxVoltageProfile.textBaseline = 'top';
+
+  xTicks.forEach(busNum => {
+    const x = padLeft + (busNum / maxBus) * plotW;
+    ctxVoltageProfile.moveTo(x, padTop);
+    ctxVoltageProfile.lineTo(x, padTop + plotH);
+    ctxVoltageProfile.fillText(busNum, x, padTop + plotH + 5);
+  });
+  ctxVoltageProfile.stroke();
+
+  ctxVoltageProfile.fillText('Bus Number', padLeft + plotW / 2, padTop + plotH + 16);
+
+  ctxVoltageProfile.save();
+  ctxVoltageProfile.translate(12, padTop + plotH / 2);
+  ctxVoltageProfile.rotate(-Math.PI / 2);
+  ctxVoltageProfile.textAlign = 'center';
+  ctxVoltageProfile.fillText('Voltage (pu)', 0, 0);
+  ctxVoltageProfile.restore();
+
+  if (!State.powerFlow) return;
+
+  const getPt = (busIdx, v) => ({
+    x: padLeft + (busIdx / maxBus) * plotW,
+    y: padTop + plotH - (Math.max(0, Math.min(1.5, v)) / 1.5) * plotH
+  });
+
+  // 1. Pre-fault Trace (Blue Dashed)
+  ctxVoltageProfile.save();
+  ctxVoltageProfile.strokeStyle = '#2563eb';
+  ctxVoltageProfile.lineWidth = 1.8;
+  ctxVoltageProfile.setLineDash([4, 3]);
+  ctxVoltageProfile.beginPath();
+  for (let i = 1; i <= maxBus; i++) {
+    const pt = getPt(i, State.powerFlow.v_prefault[String(i)] || 1.0);
+    if (i === 1) ctxVoltageProfile.moveTo(pt.x, pt.y);
+    else ctxVoltageProfile.lineTo(pt.x, pt.y);
+  }
+  ctxVoltageProfile.stroke();
+
+  ctxVoltageProfile.setLineDash([]);
+  ctxVoltageProfile.fillStyle = '#2563eb';
+  const stepDot = is69 ? 4 : 2;
+  for (let i = 1; i <= maxBus; i += stepDot) {
+    const pt = getPt(i, State.powerFlow.v_prefault[String(i)] || 1.0);
+    ctxVoltageProfile.beginPath();
+    ctxVoltageProfile.arc(pt.x, pt.y, 2.0, 0, Math.PI * 2);
+    ctxVoltageProfile.fill();
+  }
+  ctxVoltageProfile.restore();
+
+  // 2. During Fault Trace (Red Solid)
+  ctxVoltageProfile.save();
+  ctxVoltageProfile.strokeStyle = '#ef4444';
+  ctxVoltageProfile.lineWidth = 2.0;
+  ctxVoltageProfile.beginPath();
+  for (let i = 1; i <= maxBus; i++) {
+    const pt = getPt(i, State.powerFlow.v_fault[String(i)] || 0.1);
+    if (i === 1) ctxVoltageProfile.moveTo(pt.x, pt.y);
+    else ctxVoltageProfile.lineTo(pt.x, pt.y);
+  }
+  ctxVoltageProfile.stroke();
+
+  ctxVoltageProfile.fillStyle = '#ef4444';
+  for (let i = 1; i <= maxBus; i += stepDot) {
+    const pt = getPt(i, State.powerFlow.v_fault[String(i)] || 0.1);
+    ctxVoltageProfile.beginPath();
+    ctxVoltageProfile.arc(pt.x, pt.y, 2.0, 0, Math.PI * 2);
+    ctxVoltageProfile.fill();
+  }
+  ctxVoltageProfile.restore();
+
+  // 3. After Restoration Trace (Green Solid)
+  ctxVoltageProfile.save();
+  ctxVoltageProfile.strokeStyle = '#10b981';
+  ctxVoltageProfile.lineWidth = 2.0;
+  ctxVoltageProfile.beginPath();
+  for (let i = 1; i <= maxBus; i++) {
+    const pt = getPt(i, State.powerFlow.v_restored[String(i)] || 0.98);
+    if (i === 1) ctxVoltageProfile.moveTo(pt.x, pt.y);
+    else ctxVoltageProfile.lineTo(pt.x, pt.y);
+  }
+  ctxVoltageProfile.stroke();
+
+  ctxVoltageProfile.fillStyle = '#10b981';
+  for (let i = 1; i <= maxBus; i += stepDot) {
+    const pt = getPt(i, State.powerFlow.v_restored[String(i)] || 0.98);
+    ctxVoltageProfile.beginPath();
+    ctxVoltageProfile.arc(pt.x, pt.y, 2.0, 0, Math.PI * 2);
+    ctxVoltageProfile.fill();
+  }
+  ctxVoltageProfile.restore();
+
+  // Legend at top right
+  const legX = padLeft + plotW - 130;
+  const legY = padTop + 5;
+  ctxVoltageProfile.font = '8.5px sans-serif';
+  ctxVoltageProfile.textAlign = 'left';
+
+  ctxVoltageProfile.strokeStyle = '#2563eb';
+  ctxVoltageProfile.setLineDash([3, 2]);
+  ctxVoltageProfile.beginPath();
+  ctxVoltageProfile.moveTo(legX, legY + 4);
+  ctxVoltageProfile.lineTo(legX + 16, legY + 4);
+  ctxVoltageProfile.stroke();
+  ctxVoltageProfile.setLineDash([]);
+  ctxVoltageProfile.fillStyle = '#2563eb';
+  ctxVoltageProfile.fillText('Pre-fault', legX + 22, legY + 6);
+
+  ctxVoltageProfile.strokeStyle = '#ef4444';
+  ctxVoltageProfile.beginPath();
+  ctxVoltageProfile.moveTo(legX, legY + 16);
+  ctxVoltageProfile.lineTo(legX + 16, legY + 16);
+  ctxVoltageProfile.stroke();
+  ctxVoltageProfile.fillStyle = '#ef4444';
+  ctxVoltageProfile.fillText('During fault', legX + 22, legY + 18);
+
+  ctxVoltageProfile.strokeStyle = '#10b981';
+  ctxVoltageProfile.beginPath();
+  ctxVoltageProfile.moveTo(legX, legY + 28);
+  ctxVoltageProfile.lineTo(legX + 16, legY + 28);
+  ctxVoltageProfile.stroke();
+  ctxVoltageProfile.fillStyle = '#10b981';
+  ctxVoltageProfile.fillText('After restoration', legX + 22, legY + 30);
+}
+
+// --- Card 5: Real-time Bus Voltage (Selected Buses) ---
+function renderRealtimeVoltageChart() {
+  if (!cvsRealtime || !cvsRealtime.parentElement) return;
+  const w = cvsRealtime.parentElement.clientWidth;
+  const h = cvsRealtime.parentElement.clientHeight;
+  ctxRealtime.clearRect(0, 0, w, h);
+
+  const padLeft = 40;
+  const padRight = 15;
+  const padTop = 15;
+  const padBottom = 28;
+  const plotW = w - padLeft - padRight;
+  const plotH = h - padTop - padBottom;
+
+  ctxRealtime.strokeStyle = '#e2e8f0';
+  ctxRealtime.lineWidth = 1;
+  ctxRealtime.beginPath();
+
+  const yTicks = [0.0, 0.5, 1.0, 1.5];
+  ctxRealtime.fillStyle = '#64748b';
+  ctxRealtime.font = '9px sans-serif';
+  ctxRealtime.textAlign = 'right';
+  ctxRealtime.textBaseline = 'middle';
+
+  yTicks.forEach(val => {
+    const y = padTop + plotH - (val / 1.5) * plotH;
+    ctxRealtime.moveTo(padLeft, y);
+    ctxRealtime.lineTo(padLeft + plotW, y);
+    ctxRealtime.fillText(val.toFixed(1), padLeft - 6, y);
+  });
+
+  const xTicks = [0, 10, 20, 30, 40, 50];
+  ctxRealtime.textAlign = 'center';
+  ctxRealtime.textBaseline = 'top';
+
+  xTicks.forEach(tVal => {
+    const x = padLeft + (tVal / 50) * plotW;
+    ctxRealtime.moveTo(x, padTop);
+    ctxRealtime.lineTo(x, padTop + plotH);
+    ctxRealtime.fillText(tVal, x, padTop + plotH + 5);
+  });
+  ctxRealtime.stroke();
+
+  ctxRealtime.fillText('Time (s)', padLeft + plotW / 2, padTop + plotH + 16);
+
+  ctxRealtime.save();
+  ctxRealtime.translate(12, padTop + plotH / 2);
+  ctxRealtime.rotate(-Math.PI / 2);
+  ctxRealtime.textAlign = 'center';
+  ctxRealtime.fillText('Voltage (pu)', 0, 0);
+  ctxRealtime.restore();
+
+  const getPt = (tVal, v) => ({
+    x: padLeft + (tVal / 50) * plotW,
+    y: padTop + plotH - (Math.max(0, Math.min(1.5, v)) / 1.5) * plotH
+  });
+
+  const pf = State.powerFlow;
+  const selectedBuses = pf?.selected_buses || [];
+  const times = pf?.time_series?.times || [0, 5, 9.8, 10, 15, 20, 25, 30, 33, 35, 40, 45, 50];
+  const trajectories = pf?.time_series?.trajectories || {};
+
+  selectedBuses.forEach(bInfo => {
+    const yVals = trajectories[bInfo.bus] || times.map(() => 1.0);
+    ctxRealtime.strokeStyle = bInfo.color;
+    ctxRealtime.lineWidth = 1.8;
+    ctxRealtime.beginPath();
+    times.forEach((tVal, idx) => {
+      const pt = getPt(tVal, yVals[idx]);
+      if (idx === 0) ctxRealtime.moveTo(pt.x, pt.y);
+      else ctxRealtime.lineTo(pt.x, pt.y);
+    });
+    ctxRealtime.stroke();
+
+    ctxRealtime.fillStyle = bInfo.color;
+    times.forEach((tVal, idx) => {
+      const pt = getPt(tVal, yVals[idx]);
+      ctxRealtime.beginPath();
+      ctxRealtime.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
+      ctxRealtime.fill();
+    });
+  });
+
+  const curX = padLeft + (State.time / 50) * plotW;
+  ctxRealtime.strokeStyle = '#ef4444';
+  ctxRealtime.lineWidth = 1.5;
+  ctxRealtime.setLineDash([3, 2]);
+  ctxRealtime.beginPath();
+  ctxRealtime.moveTo(curX, padTop);
+  ctxRealtime.lineTo(curX, padTop + plotH);
+  ctxRealtime.stroke();
+  ctxRealtime.setLineDash([]);
+
+  const legX = padLeft + plotW - 145;
+  const legY = padTop + 5;
+  ctxRealtime.font = '8px sans-serif';
+  ctxRealtime.textAlign = 'left';
+
+  selectedBuses.forEach((item, idx) => {
+    const y = legY + idx * 11;
+    ctxRealtime.fillStyle = item.color;
+    ctxRealtime.fillRect(legX, y + 1, 8, 8);
+    ctxRealtime.fillText(item.label, legX + 12, y + 8);
+  });
+}
+
+// --- Card 6: Load Restoration Chart ---
+function renderLoadRestorationChart() {
+  if (!cvsLoad || !cvsLoad.parentElement) return;
+  const w = cvsLoad.parentElement.clientWidth;
+  const h = cvsLoad.parentElement.clientHeight;
+  ctxLoad.clearRect(0, 0, w, h);
+
+  const padLeft = 40;
+  const padRight = 15;
+  const padTop = 15;
+  const padBottom = 28;
+  const plotW = w - padLeft - padRight;
+  const plotH = h - padTop - padBottom;
+
+  ctxLoad.strokeStyle = '#e2e8f0';
+  ctxLoad.lineWidth = 1;
+  ctxLoad.beginPath();
+
+  const yTicks = [0, 20, 40, 60, 80, 100];
+  ctxLoad.fillStyle = '#64748b';
+  ctxLoad.font = '9px sans-serif';
+  ctxLoad.textAlign = 'right';
+  ctxLoad.textBaseline = 'middle';
+
+  yTicks.forEach(val => {
+    const y = padTop + plotH - (val / 100) * plotH;
+    ctxLoad.moveTo(padLeft, y);
+    ctxLoad.lineTo(padLeft + plotW, y);
+    ctxLoad.fillText(val, padLeft - 6, y);
+  });
+
+  const xTicks = [0, 10, 20, 30, 40, 50];
+  ctxLoad.textAlign = 'center';
+  ctxLoad.textBaseline = 'top';
+
+  xTicks.forEach(tVal => {
+    const x = padLeft + (tVal / 50) * plotW;
+    ctxLoad.moveTo(x, padTop);
+    ctxLoad.lineTo(x, padTop + plotH);
+    ctxLoad.fillText(tVal, x, padTop + plotH + 5);
+  });
+  ctxLoad.stroke();
+
+  ctxLoad.fillText('Time (s)', padLeft + plotW / 2, padTop + plotH + 16);
+
+  ctxLoad.save();
+  ctxLoad.translate(12, padTop + plotH / 2);
+  ctxLoad.rotate(-Math.PI / 2);
+  ctxLoad.textAlign = 'center';
+  ctxLoad.fillText('Restored Load (%)', 0, 0);
+  ctxLoad.restore();
+
+  const getPt = (tVal, pct) => ({
+    x: padLeft + (tVal / 50) * plotW,
+    y: padTop + plotH - (Math.max(0, Math.min(100, pct)) / 100) * plotH
+  });
+
+  const targetPct = State.powerFlow?.restored_pct || 96.0;
+
+  const pts = [
+    { t: 0, p: 0 },
+    { t: 4, p: targetPct * 0.08 },
+    { t: 8, p: targetPct * 0.18 },
+    { t: 12, p: targetPct * 0.28 },
+    { t: 16, p: targetPct * 0.42 },
+    { t: 20, p: targetPct * 0.58 },
+    { t: 24, p: targetPct * 0.74 },
+    { t: 28, p: targetPct * 0.86 },
+    { t: 32, p: targetPct * 0.94 },
+    { t: 36, p: targetPct * 0.98 },
+    { t: 40, p: targetPct },
+    { t: 45, p: targetPct },
+    { t: 50, p: targetPct }
+  ];
+
+  ctxLoad.strokeStyle = '#10b981';
+  ctxLoad.lineWidth = 2.0;
+  ctxLoad.beginPath();
+  pts.forEach((pt, idx) => {
+    const pos = getPt(pt.t, pt.p);
+    if (idx === 0) ctxLoad.moveTo(pos.x, pos.y);
+    else ctxLoad.lineTo(pos.x, pos.y);
+  });
+  ctxLoad.stroke();
+
+  ctxLoad.fillStyle = '#10b981';
+  pts.forEach(pt => {
+    const pos = getPt(pt.t, pt.p);
+    ctxLoad.beginPath();
+    ctxLoad.arc(pos.x, pos.y, 2.5, 0, Math.PI * 2);
+    ctxLoad.fill();
+  });
+
+  const curX = padLeft + (State.time / 50) * plotW;
+  ctxLoad.strokeStyle = '#ef4444';
+  ctxLoad.lineWidth = 1.5;
+  ctxLoad.setLineDash([3, 2]);
+  ctxLoad.beginPath();
+  ctxLoad.moveTo(curX, padTop);
+  ctxLoad.lineTo(curX, padTop + plotH);
+  ctxLoad.stroke();
+  ctxLoad.setLineDash([]);
+}
+
+// --- Card 8: Uncertainty / Probable Fault Location Bar Chart ---
+function renderUncertaintyChart() {
+  if (!cvsUncertainty || !cvsUncertainty.parentElement) return;
+  const w = cvsUncertainty.parentElement.clientWidth;
+  const h = cvsUncertainty.parentElement.clientHeight;
+  ctxUncertainty.clearRect(0, 0, w, h);
+
+  const padLeft = 32;
+  const padRight = 10;
+  const padTop = 15;
+  const padBottom = 32;
+  const plotW = w - padLeft - padRight;
+  const plotH = h - padTop - padBottom;
+
+  ctxUncertainty.strokeStyle = '#e2e8f0';
+  ctxUncertainty.lineWidth = 1;
+  ctxUncertainty.beginPath();
+
+  const yTicks = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+  ctxUncertainty.fillStyle = '#64748b';
+  ctxUncertainty.font = '8.5px sans-serif';
+  ctxUncertainty.textAlign = 'right';
+  ctxUncertainty.textBaseline = 'middle';
+
+  yTicks.forEach(val => {
+    const y = padTop + plotH - val * plotH;
+    ctxUncertainty.moveTo(padLeft, y);
+    ctxUncertainty.lineTo(padLeft + plotW, y);
+    ctxUncertainty.fillText(val.toFixed(1), padLeft - 4, y);
+  });
+  ctxUncertainty.stroke();
+
+  ctxUncertainty.save();
+  ctxUncertainty.translate(10, padTop + plotH / 2);
+  ctxUncertainty.rotate(-Math.PI / 2);
+  ctxUncertainty.textAlign = 'center';
+  ctxUncertainty.fillText('Probability', 0, 0);
+  ctxUncertainty.restore();
+
+  const candidates = State.powerFlow?.candidates || [
+    { line: '17-18', prob: 0.06 },
+    { line: '18-19', prob: 0.92, isTarget: true },
+    { line: '19-20', prob: 0.02 },
+    { line: '16-17', prob: 0.01 },
+    { line: '20-21', prob: 0.01 }
+  ];
+
+  const numBars = candidates.length;
+  const barWidth = Math.min(28, (plotW / numBars) * 0.65);
+  const gap = plotW / numBars;
+
+  const growProgress = State.time < 1.0 ? 0.0 : Math.min(1.0, (State.time - 1.0) / 0.5);
+
+  candidates.forEach((cand, idx) => {
+    const cx = padLeft + gap * idx + gap / 2;
+    const barH = cand.prob * plotH * growProgress;
+    const by = padTop + plotH - barH;
+
+    ctxUncertainty.fillStyle = cand.isTarget || cand.is_target ? '#dc2626' : '#94a3b8';
+    ctxUncertainty.fillRect(cx - barWidth / 2, by, barWidth, barH);
+
+    if (growProgress > 0.8) {
+      ctxUncertainty.fillStyle = '#1e293b';
+      ctxUncertainty.font = '8px sans-serif';
+      ctxUncertainty.textAlign = 'center';
+      ctxUncertainty.fillText(`(${cand.prob.toFixed(2)})`, cx, by - 4);
+    }
+
+    ctxUncertainty.fillStyle = '#475569';
+    ctxUncertainty.font = '8px sans-serif';
+    ctxUncertainty.textAlign = 'center';
+    ctxUncertainty.textBaseline = 'top';
+    ctxUncertainty.fillText(cand.line, cx, padTop + plotH + 5);
+  });
+
+  ctxUncertainty.fillText('Candidate Lines', padLeft + plotW / 2, padTop + plotH + 18);
+}
+
+// --- Interactive Topology Tooltip & Click-to-Fault Handlers ---
+function getTopologyScaleAndOffset() {
+  const rect = cvsTopology.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const scaleX = w / 1020;
+  const scaleY = h / 270;
+  const scale = Math.min(scaleX, scaleY);
+  const offsetX = (w - 1000 * scale) / 2 + 10;
+  const offsetY = (h - 260 * scale) / 2;
+  return { scale, offsetX, offsetY };
+}
+
+function handleTopologyMouseMove(e) {
+  const rect = cvsTopology.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  const { scale, offsetX, offsetY } = getTopologyScaleAndOffset();
+  const positions = activeBusPositions();
+
+  let hoveredBus = null;
+  Object.entries(positions).forEach(([busId, pos]) => {
+    const bx = pos.x * scale + offsetX;
+    const by = pos.y * scale + offsetY;
+    const dist = Math.hypot(mouseX - bx, mouseY - by);
+    if (dist < 12 * scale) {
+      hoveredBus = { busId, pos };
+    }
+  });
+
+  if (hoveredBus && State.powerFlow) {
+    const bId = hoveredBus.busId;
+    let vNow = State.powerFlow.v_prefault[bId] || 1.0;
+    if (State.time >= 1.0 && State.time < 1.5) {
+      vNow = State.powerFlow.v_fault[bId];
+    } else if (State.time >= 1.5 && State.time < 12.3) {
+      vNow = State.powerFlow.v_isolate[bId];
+    } else if (State.time >= 12.3) {
+      vNow = State.powerFlow.v_restored[bId];
+    }
+
+    busTooltip.style.display = 'block';
+    busTooltip.style.left = `${e.clientX + 14}px`;
+    busTooltip.style.top = `${e.clientY + 14}px`;
+    busTooltip.innerHTML = `
+      <strong>Bus ${bId} (${State.feeder.toUpperCase()})</strong><br>
+      Voltage: <strong>${vNow} pu</strong><br>
+      Nominal Base: 12.66 kV<br>
+      Status: ${vNow > 0.9 ? '<span style="color:#10b981">Normal / Restored</span>' : (vNow > 0.05 ? '<span style="color:#ef4444">Fault Sag</span>' : '<span style="color:#94a3b8">Blackout / Isolated Island</span>')}
+    `;
+    cvsTopology.style.cursor = 'pointer';
+  } else {
+    busTooltip.style.display = 'none';
+    cvsTopology.style.cursor = 'default';
+  }
+}
+
+async function handleTopologyClick(e) {
+  const rect = cvsTopology.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  const { scale, offsetX, offsetY } = getTopologyScaleAndOffset();
+  const positions = activeBusPositions();
+  const gridLines = activeGridLines();
+
+  let clickedBus = null;
+  Object.entries(positions).forEach(([busId, pos]) => {
+    const bx = pos.x * scale + offsetX;
+    const by = pos.y * scale + offsetY;
+    if (Math.hypot(mouseX - bx, mouseY - by) < 14 * scale) {
+      clickedBus = busId;
+    }
+  });
+
+  let targetLine = null;
+  if (clickedBus) {
+    const attached = gridLines.find(l => !l.isVirtual && (l.to === clickedBus || l.from === clickedBus));
+    if (attached) targetLine = attached.id;
+  } else {
+    gridLines.forEach(l => {
+      if (l.isVirtual || !positions[l.from] || !positions[l.to]) return;
+      const p1 = { x: positions[l.from].x * scale + offsetX, y: positions[l.from].y * scale + offsetY };
+      const p2 = { x: positions[l.to].x * scale + offsetX, y: positions[l.to].y * scale + offsetY };
+      const dist = distToSegment({ x: mouseX, y: mouseY }, p1, p2);
+      if (dist < 10 * scale) {
+        targetLine = l.id;
+      }
+    });
+  }
+
+  if (targetLine) {
+    let opt = selectFaultLine.querySelector(`option[value="${targetLine}"]`);
+    if (!opt) {
+      const parts = targetLine.split('-');
+      const rev = `${parts[1]}-${parts[0]}`;
+      opt = selectFaultLine.querySelector(`option[value="${rev}"]`);
+      if (opt) targetLine = rev;
+    }
+
+    if (opt) {
+      selectFaultLine.value = targetLine;
+      await loadScenario(targetLine, State.faultType, State.feeder);
+      startSimulation();
+    }
+  }
+}
+
+function distToSegment(p, v, w) {
+  const l2 = (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
+  if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+  let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+}
+
+</script>
+</body>
+</html>

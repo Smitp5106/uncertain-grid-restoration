@@ -1,0 +1,14 @@
+Clear
+Set DefaultBaseFrequency=60
+
+New Circuit.IEEE33Bus basekv=12.66 pu=1.00 phases=3 bus1=1
+~ Angle=0
+~ MVAsc3=2000000 MVASC1=2000000
+
+Redirect Lines.dss
+Redirect Loads.dss
+
+Set VoltageBases=[12.66]
+CalcVoltageBases
+
+Solve

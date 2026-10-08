@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables & secrets
+.env
+.env.*
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# IDEs and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Large dataset dumps, checkpoints, and binary simulation outputs (>100MB GitHub limit)
+*.pkl
+*.pt
+*.pth
+*.zip
+uncertain_grid_restoration/data/raw/*
+uncertain_grid_restoration/data/state_estimation/*
+uncertain_grid_restoration/data/fault_localization/*
+uncertain_grid_restoration/data/processed/*
+
+# Retain directory structure placeholders
+!uncertain_grid_restoration/data/**/.gitkeep

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Based Fault Diagnosis and Autonomous Restoration for Distribution Network (OpenDSS)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="top-header">
+    <div class="header-title">
+      <h1>AI-Based Fault Diagnosis and Autonomous Restoration for Distribution Network (OpenDSS)</h1>
+    </div>
+    <div class="header-controls">
+      <button id="btnRunTop" class="btn btn-run">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Run Simulation
+      </button>
+      <button id="btnStepTop" class="btn btn-step">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+        Step
+      </button>
+      <button id="btnResetTop" class="btn btn-reset">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- Timeline Playback & Scrubber Controls Sub-bar -->
+  <div class="timeline-bar">
+    <div class="sim-time-display">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+      <span id="timeText">t = 0.00 s</span>
+    </div>
+
+    <div class="timeline-slider-container">
+      <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="50" step="0.1" value="0">
+    </div>
+
+    <span id="phaseBadge" class="phase-pill phase-normal">Pre-Fault Normal</span>
+
+    <div class="speed-selector">
+      <span>Speed:</span>
+      <button class="speed-btn active" data-speed="1">1x</button>
+      <button class="speed-btn" data-speed="2">2x</button>
+      <button class="speed-btn" data-speed="5">5x</button>
+    </div>
+  </div>
+
+  <!-- Main 10-Panel Dashboard Grid -->
+  <main class="dashboard-grid">
+
+    <!-- ROW 1: Simulation Settings | Grid Topology | System Status -->
+    <section class="row-1">
+
+      <!-- Panel 1: Simulation Settings -->
+      <div class="card panel-settings">
+        <div class="card-header">
+          <span>1. Simulation Settings</span>
+        </div>
+        <div class="card-body">
+          <form class="settings-form" id="settingsForm" onsubmit="return false;">
+            <div class="form-group">
+              <label for="selectFeeder">Test Feeder</label>
+              <select id="selectFeeder" class="form-control">
+                <option value="ieee33" selected>IEEE 33-bus</option>
+                <option value="ieee69">IEEE 69-bus</option>
+                <option value="ieee123">IEEE 123-bus</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="selectFaultType">Fault Type</label>
+              <select id="selectFaultType" class="form-control">
+                <option value="SLG" selected>Single Line-to-Ground (LG)</option>
+                <option value="LL">Line-to-Line (LL)</option>
+                <option value="3P">Three-Phase (3P)</option>
+                <option value="HIF">High Impedance Fault (HIF)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="selectFaultLine">Fault Location (Line)</label>
+              <select id="selectFaultLine" class="form-control">
+                <optgroup label="Main Feeder (Substation Trunk)">
+                  <option value="1-2">Line 1–2</option>
+                  <option value="2-3">Line 2–3</option>
+                  <option value="3-4">Line 3–4</option>
+                  <option value="4-5">Line 4–5</option>
+                  <option value="5-6">Line 5–6</option>
+                  <option value="6-7">Line 6–7</option>
+                  <option value="7-8">Line 7–8</option>
+                  <option value="8-9">Line 8–9</option>
+                  <option value="9-10">Line 9–10</option>
+                  <option value="10-11">Line 10–11</option>
+                  <option value="11-12">Line 11–12</option>
+                  <option value="12-13">Line 12–13</option>
+                  <option value="13-14">Line 13–14</option>
+                  <option value="14-15">Line 14–15</option>
+                  <option value="15-16">Line 15–16</option>
+                  <option value="16-17">Line 16–17</option>
+                  <option value="17-18">Line 17–18</option>
+                </optgroup>
+                <optgroup label="Lateral 1 (Feeder Branch 1)">
+                  <option value="18-19" selected>Line 18–19</option>
+                  <option value="2-19">Line 2–19</option>
+                  <option value="19-20">Line 19–20</option>
+                  <option value="20-21">Line 20–21</option>
+                  <option value="21-22">Line 21–22</option>
+                </optgroup>
+                <optgroup label="Lateral 2 (Feeder Branch 2)">
+                  <option value="3-23">Line 3–23</option>
+                  <option value="23-24">Line 23–24</option>
+                  <option value="24-25">Line 24–25</option>
+                </optgroup>
+                <optgroup label="Lateral 3 (Feeder Branch 3)">
+                  <option value="6-26">Line 6–26</option>
+                  <option value="26-27">Line 26–27</option>
+                  <option value="27-28">Line 27–28</option>
+                  <option value="28-29">Line 28–29</option>
+                  <option value="29-30">Line 29–30</option>
+                  <option value="30-31">Line 30–31</option>
+                  <option value="31-32">Line 31–32</option>
+                  <option value="32-33">Line 32–33</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="inputStartTime">Fault Start Time (s)</label>
+              <input type="number" id="inputStartTime" class="form-control" value="1.0" step="0.1" min="0.5" max="10">
+            </div>
+
+            <div class="form-group">
+              <label for="inputClearTime">Fault Clearance Time (s)</label>
+              <input type="text" id="inputClearTime" class="form-control" value="(Auto by system)" readonly>
+            </div>
+
+            <div class="form-group">
+              <label for="selectMeas">Measurement Availability</label>
+              <select id="selectMeas" class="form-control">
+                <option value="partial" selected>Partial (Selected Buses)</option>
+                <option value="full">Full (100%)</option>
+                <option value="noisy">Noisy & Masked (20% dropout)</option>
+              </select>
+            </div>
+
+            <div class="settings-btn-row">
+              <button id="btnRunForm" class="btn-form-run">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Run Simulation
+              </button>
+              <button type="button" id="btnRandomFault" class="btn-form-random" title="Randomize fault line and simulate">
+                🎲 Random Fault
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Panel 2: Distribution Network Topology -->
+      <div class="card panel-topology">
+        <div class="card-header">
+          <span id="topologyTitle">2. Distribution Network Topology (IEEE 33-bus)</span>
+          <span style="font-size: 0.72rem; color: #475569; font-weight: normal;">Interactive • Animated Power Flow</span>
+        </div>
+        <div class="card-body" style="padding: 4px;">
+          <div class="topology-container">
+            <div class="topology-legend">
+              <div class="legend-item">
+                <div class="legend-line-closed"></div>
+                <span>Closed Switch (Energized)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-line-open"></div>
+                <span>Open Switch</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-icon-lightning">⚡</span>
+                <span>Faulted Line</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-normal"></div>
+                <span>Bus (Normal)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-faulted"></div>
+                <span>Bus (Faulted)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot-restored"></div>
+                <span>Bus (Restored)</span>
+              </div>
+            </div>
+            <canvas id="topologyCanvas" class="topology-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 3: System Status -->
+      <div class="card panel-status">
+        <div class="card-header">
+          <span>3. System Status</span>
+        </div>
+        <div class="card-body">
+          <div class="status-cards-container">
+
+            <!-- 1. Fault Detected -->
+            <div class="status-badge badge-red" id="cardFaultDetected">
+              <div class="status-icon">⚡</div>
+              <div class="info">
+                <div class="status-label">Fault Detected</div>
+                <div class="status-value" id="valFaultDetected">No (Normal Grid)</div>
+              </div>
+            </div>
+
+            <!-- 2. Fault Location -->
+            <div class="status-badge badge-amber" id="cardFaultLocation">
+              <div class="status-icon">🎯</div>
+              <div class="info">
+                <div class="status-label">Fault Location (Predicted)</div>
+                <div class="status-value" id="valFaultLocation">Line 18 – 19</div>
+                <div class="status-sub" id="valConfidenceLoc">Confidence: 0.92</div>
+              </div>
+            </div>
+
+            <!-- 3. Fault Type -->
+            <div class="status-badge badge-green" id="cardFaultType">
+              <div class="status-icon">⚙️</div>
+              <div class="info">
+                <div class="status-label">Fault Type</div>
+                <div class="status-value" id="valFaultType">Single Line-to-Ground (A)</div>
+                <div class="status-sub" id="valConfidenceType">Confidence: 0.95</div>
+              </div>
+            </div>
+
+            <!-- 4. Restoration Status -->
+            <div class="status-badge badge-purple" id="cardRestoration">
+              <div class="status-icon">🛡️</div>
+              <div class="info">
+                <div class="status-label">Restoration Status</div>
+                <div class="status-value" id="valRestorationStatus">Standby</div>
+              </div>
+            </div>
+
+            <!-- 5. Total Load Restored -->
+            <div class="status-badge badge-blue" id="cardLoadRestored">
+              <div class="status-icon">👥</div>
+              <div class="info" style="width: 100%;">
+                <div class="status-label">Total Load Restored</div>
+                <div class="status-value" id="valLoadRestored">100.0 % (3.24 MW / 3.24 MW)</div>
+                <div class="load-progress-bg">
+                  <div id="loadProgressBar" class="load-progress-bar" style="width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. Total Switching Actions -->
+            <div class="status-badge badge-slate" id="cardSwitchActions">
+              <div class="status-icon">⏱️</div>
+              <div class="info">
+                <div class="status-label">Total Switching Actions</div>
+                <div class="status-value" id="valSwitchActions">0 (Open: 0, Close: 0)</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ROW 2: Voltage Profile | Real-time Bus Voltage | Load Restoration -->
+    <section class="row-2">
+
+      <!-- Panel 4: Voltage Profile -->
+      <div class="card">
+        <div class="card-header">
+          <span>4. Voltage Profile</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub">Bus Voltage (pu)</div>
+          <div class="chart-container">
+            <canvas id="voltageProfileCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 5: Real-time Bus Voltage -->
+      <div class="card">
+        <div class="card-header">
+          <span>5. Real-time Bus Voltage (Selected Buses)</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub" style="height: 18px;"></div>
+          <div class="chart-container">
+            <canvas id="realtimeVoltageCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 6: Load Restoration -->
+      <div class="card">
+        <div class="card-header">
+          <span>6. Load Restoration</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub">Restored Load Percentage</div>
+          <div class="chart-container">
+            <canvas id="loadRestorationCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ROW 3: Fault Detection Output | Uncertainty | Switching Actions | Post-Restoration Network -->
+    <section class="row-3">
+
+      <!-- Panel 7: Fault Detection Output -->
+      <div class="card">
+        <div class="card-header">
+          <span>7. Fault Detection Output</span>
+        </div>
+        <div class="card-body">
+          <div class="fault-detect-box" id="detectStatusBox">
+            <div class="fault-detect-icon" id="detectIcon">✓</div>
+            <div class="fault-detect-title" id="detectTitle">Fault Event Detected</div>
+          </div>
+          <div class="detect-details-list">
+            <div class="detect-row">
+              <span class="detect-key">Detection Time:</span>
+              <span class="detect-val" id="detTime">1.02 s</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Fault Type:</span>
+              <span class="detect-val" id="detType">Single Line-to-Ground (A)</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Predicted Location:</span>
+              <span class="detect-val" id="detLoc">Line 18 – 19</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Confidence:</span>
+              <span class="detect-val" id="detConf">0.92</span>
+            </div>
+            <div class="detect-row">
+              <span class="detect-key">Model:</span>
+              <span class="detect-val">Spatial-Temporal GNN (R-GCN)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 8: Uncertainty / Probable Fault Location -->
+      <div class="card">
+        <div class="card-header">
+          <span>8. Uncertainty / Probable Fault Location</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-title-sub">Probability of Fault Location</div>
+          <div class="chart-container">
+            <canvas id="uncertaintyCanvas" class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 9: Switching Actions (Restoration) -->
+      <div class="card">
+        <div class="card-header">
+          <span>9. Switching Actions (Restoration)</span>
+        </div>
+        <div class="card-body" style="padding: 6px;">
+          <div class="switching-table-container">
+            <table class="switching-table" id="switchingTable">
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Time (s)</th>
+                  <th>Action</th>
+                  <th>Switch / Line</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="stepRow1">
+                  <td>1</td>
+                  <td>1.5</td>
+                  <td><span class="tag-action-open">Open</span></td>
+                  <td id="swLine1">18-19</td>
+                  <td><span class="tag-result-isolate">Isolate fault</span></td>
+                </tr>
+                <tr id="stepRow2">
+                  <td>2</td>
+                  <td>12.3</td>
+                  <td><span class="tag-action-close">Close</span></td>
+                  <td id="swLine2">33-32</td>
+                  <td><span class="tag-result-restore">Restore load</span></td>
+                </tr>
+                <tr id="stepRow3">
+                  <td>3</td>
+                  <td>28.4</td>
+                  <td><span class="tag-action-close">Close</span></td>
+                  <td id="swLine3">25-29</td>
+                  <td><span class="tag-result-restore">Restore load</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 10: Post-Restoration Network -->
+      <div class="card">
+        <div class="card-header">
+          <span>10. Post-Restoration Network</span>
+        </div>
+        <div class="card-body" style="padding: 4px;">
+          <div class="mini-topology-container">
+            <canvas id="miniTopologyCanvas" class="mini-topology-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Interactive Bus Tooltip -->
+  <div id="busTooltip" class="bus-tooltip"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
