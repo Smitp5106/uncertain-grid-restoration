@@ -36,8 +36,6 @@ RM_Project/
 ├── dashboard.html                         # Standalone bundled interactive dashboard
 ├── bundle_html.py                         # Bundler to package HTML, CSS, and JS into single file
 ├── run_dashboard.py                       # Root shortcut to launch local dashboard server
-├── generate_reference_dashboard.py        # Generates reference telemetry data for visualization
-├── test_suite_comprehensive.py            # End-to-end integration and verification test suite
 ├── PROJECT_DOCUMENT.md                    # In-depth technical specifications and research paper
 ├── restoration_dashboard_output.png       # Dashboard screenshot preview
 │
@@ -96,15 +94,7 @@ Execute a full restoration sequence tracing noisy sensors through the physics GN
 python uncertain_grid_restoration/demo_pipeline.py
 ```
 
-### 4. Run the Comprehensive Test Suite
-
-Verify all mathematical constraints, graph builds, OpenDSS solvers, and safety filters:
-
-```bash
-python test_suite_comprehensive.py
-```
-
-### 5. Training Models
+### 4. Training Models
 
 ```bash
 # Generate scenarios
