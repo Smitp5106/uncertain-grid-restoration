@@ -26,7 +26,6 @@ const State = {
   
   // Flow Particles for Topology Animations
   particlesMain: [],
-  particlesMini: [],
   particlesTie: [],
   
   // Lightning Arc Animation
@@ -436,15 +435,6 @@ function initFlowParticles() {
     });
   }
 
-  for (let i = 0; i < 40; i++) {
-    State.particlesMini.push({
-      lineIdx: Math.floor(Math.random() * lines.length),
-      progress: Math.random(),
-      speed: 0.01 + Math.random() * 0.008,
-      size: 2.0
-    });
-  }
-
   for (let i = 0; i < 25; i++) {
     State.particlesTie.push({
       tieIdx: Math.floor(Math.random() * ties.length),
@@ -462,10 +452,8 @@ let selectFeeder, selectFaultLine, selectFaultType;
 let topologyTitle;
 let cvsTopology, ctxTopology;
 let cvsVoltageProfile, ctxVoltageProfile;
-let cvsRealtime, ctxRealtime;
 let cvsLoad, ctxLoad;
 let cvsUncertainty, ctxUncertainty;
-let cvsMiniTopology, ctxMiniTopology;
 let busTooltip;
 
 // Status Badges
@@ -473,6 +461,7 @@ let valFaultDetected, valFaultLocation, valConfidenceLoc;
 let valFaultType, valConfidenceType, valRestorationStatus;
 let valLoadRestored, loadProgressBar, valSwitchActions;
 let detTime, detType, detLoc, detConf;
+let detectStatusBox, detectIcon, detectTitle;
 
 // --- Setup & Event Listeners ---
 window.addEventListener('DOMContentLoaded', async () => {
@@ -511,17 +500,11 @@ function initDOMElements() {
   cvsVoltageProfile = document.getElementById('voltageProfileCanvas');
   ctxVoltageProfile = cvsVoltageProfile.getContext('2d');
 
-  cvsRealtime = document.getElementById('realtimeVoltageCanvas');
-  ctxRealtime = cvsRealtime.getContext('2d');
-
   cvsLoad = document.getElementById('loadRestorationCanvas');
   ctxLoad = cvsLoad.getContext('2d');
 
   cvsUncertainty = document.getElementById('uncertaintyCanvas');
   ctxUncertainty = cvsUncertainty.getContext('2d');
-
-  cvsMiniTopology = document.getElementById('miniTopologyCanvas');
-  ctxMiniTopology = cvsMiniTopology.getContext('2d');
 
   busTooltip = document.getElementById('busTooltip');
 
@@ -539,6 +522,9 @@ function initDOMElements() {
   detType = document.getElementById('detType');
   detLoc = document.getElementById('detLoc');
   detConf = document.getElementById('detConf');
+  detectStatusBox = document.getElementById('detectStatusBox');
+  detectIcon = document.getElementById('detectIcon');
+  detectTitle = document.getElementById('detectTitle');
 }
 
 function populateFaultLineDropdown(feeder) {
@@ -632,7 +618,6 @@ function setupEventListeners() {
     populateFaultLineDropdown(State.feeder);
     initFlowParticles();
     await loadScenario(State.faultLine, State.faultType, State.feeder);
-    startSimulation();
   });
 
   // 🎲 Random Fault Generator Button
@@ -681,6 +666,7 @@ async function loadScenario(faultLine, faultType, feeder) {
   State.faultLine = faultLine;
   State.faultType = faultType;
   State.feeder = feeder || State.feeder;
+  resetSimulation();
   updateFaultLineTarget();
   State.powerFlow = await fetchOrCalculatePowerFlow(faultLine, faultType, State.feeder);
   rebuildEventsFromPowerFlow();
@@ -724,10 +710,8 @@ function handleCanvasResize() {
   [
     cvsTopology,
     cvsVoltageProfile,
-    cvsRealtime,
     cvsLoad,
-    cvsUncertainty,
-    cvsMiniTopology
+    cvsUncertainty
   ].forEach(canvas => {
     if (!canvas || !canvas.parentElement) return;
     const rect = canvas.parentElement.getBoundingClientRect();
@@ -760,10 +744,8 @@ function simulationLoop(timestamp) {
   updateAnimations(dt);
 
   updateDashboardUI();
-  renderTopology(ctxTopology, cvsTopology, false);
-  renderTopology(ctxMiniTopology, cvsMiniTopology, true);
+  renderTopology(ctxTopology, cvsTopology);
   renderVoltageProfileChart();
-  renderRealtimeVoltageChart();
   renderLoadRestorationChart();
   renderUncertaintyChart();
 
@@ -823,14 +805,6 @@ function updateAnimations(dt) {
   };
 
   State.particlesMain.forEach(p => {
-    const line = lines[p.lineIdx];
-    if (line && !isLineOpen(line)) {
-      p.progress += p.speed * (State.isPlaying ? State.speed : 1.0);
-      if (p.progress > 1.0) p.progress = 0;
-    }
-  });
-
-  State.particlesMini.forEach(p => {
     const line = lines[p.lineIdx];
     if (line && !isLineOpen(line)) {
       p.progress += p.speed * (State.isPlaying ? State.speed : 1.0);
@@ -909,6 +883,31 @@ function updateDashboardUI() {
     valSwitchActions.innerText = '3 (Open: 1, Close: 2)';
   }
 
+  if (detectStatusBox && detectTitle && detectIcon) {
+    if (t < 1.0) {
+      detectStatusBox.style.background = '#f0fdf4';
+      detectStatusBox.style.borderColor = '#bbf7d0';
+      detectIcon.innerText = '🛡️';
+      detectIcon.style.color = '#10b981';
+      detectTitle.innerText = 'Normal Grid Operation (Monitoring)';
+      if (detTime) detTime.innerText = 'Standby';
+      if (detType) detType.innerText = 'Nominal (No Fault)';
+      if (detLoc) detLoc.innerText = 'Normal Grid';
+      if (detConf) detConf.innerText = '1.00 (Healthy)';
+    } else {
+      detectStatusBox.style.background = '#fef2f2';
+      detectStatusBox.style.borderColor = '#fecaca';
+      detectIcon.innerText = '⚡';
+      detectIcon.style.color = '#dc2626';
+      detectTitle.innerText = 'Fault Event Detected';
+      if (detTime) detTime.innerText = '1.02 s';
+      if (detType) detType.innerText = getFaultTypeLabel(State.faultType);
+      const parts = State.faultLine.replace('Line ', '').replace('line ', '').trim().split('-');
+      if (detLoc) detLoc.innerText = `Line ${parts[0]} – ${parts[1]}`;
+      if (detConf) detConf.innerText = '0.92';
+    }
+  }
+
   updateSwitchingTable();
 }
 
@@ -936,21 +935,21 @@ function updateSwitchingTable() {
   });
 }
 
-// --- Card 2 & 10: Distribution Network Topology Renderer ---
-function renderTopology(ctx, canvas, isMini) {
+// --- Card 2: Distribution Network Topology Renderer ---
+function renderTopology(ctx, canvas) {
   if (!canvas || !canvas.parentElement) return;
   const w = canvas.parentElement.clientWidth;
   const h = canvas.parentElement.clientHeight;
   ctx.clearRect(0, 0, w, h);
 
-  ctx.fillStyle = isMini ? '#f8fafc' : '#ffffff';
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
 
   const scaleX = w / 1020;
   const scaleY = h / 270;
   const scale = Math.min(scaleX, scaleY);
   const offsetX = (w - 1000 * scale) / 2 + 10;
-  const offsetY = (h - 260 * scale) / 2 + (isMini ? 15 : 0);
+  const offsetY = (h - 260 * scale) / 2;
 
   const positions = activeBusPositions();
   const gridLines = activeGridLines();
@@ -1000,16 +999,10 @@ function renderTopology(ctx, canvas, isMini) {
     const p2 = getPt(positions[line.to]);
 
     const isFault = line.isFaultTarget;
-    let isOpen = false;
-
-    if (isMini) {
-      if (isFault) isOpen = true;
-    } else {
-      if (isFault && t >= 1.5) isOpen = true;
-    }
+    const isOpen = isFault && t >= 1.5;
 
     ctx.save();
-    if (isFault && t >= 1.0 && t < 1.5 && !isMini) {
+    if (isFault && t >= 1.0 && t < 1.5) {
       ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 3.5 * scale;
       ctx.beginPath();
@@ -1056,12 +1049,8 @@ function renderTopology(ctx, canvas, isMini) {
     const isStep3 = s3Norm.includes(tieIdNorm) || s3Norm.includes(tieFromTo) || s3Norm.includes(tieToFrom);
 
     let isClosed = false;
-    if (isMini) {
-      isClosed = isStep2 || isStep3;
-    } else {
-      if (isStep2 && t >= 12.3) isClosed = true;
-      if (isStep3 && t >= 28.4) isClosed = true;
-    }
+    if (isStep2 && t >= 12.3) isClosed = true;
+    if (isStep3 && t >= 28.4) isClosed = true;
 
     ctx.save();
     if (isClosed) {
@@ -1087,17 +1076,15 @@ function renderTopology(ctx, canvas, isMini) {
     }
     ctx.stroke();
 
-    if (!isMini) {
-      const labelX = (p1.x + p2.x) / 2;
-      const labelY = tie.isCurve
-        ? (p1.y + p2.y) / 2 + (tie.curveOffset || -40) * scale * 0.75
-        : (p1.y + p2.y) / 2 - 6 * scale;
+    const labelX = (p1.x + p2.x) / 2;
+    const labelY = tie.isCurve
+      ? (p1.y + p2.y) / 2 + (tie.curveOffset || -40) * scale * 0.75
+      : (p1.y + p2.y) / 2 - 6 * scale;
 
-      ctx.fillStyle = isClosed ? '#059669' : '#64748b';
-      ctx.font = `${Math.round(7.5 * scale)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(tie.id, labelX, labelY);
-    }
+    ctx.fillStyle = isClosed ? '#059669' : '#64748b';
+    ctx.font = `${Math.round(7.5 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(tie.id, labelX, labelY);
     ctx.restore();
 
     if (isClosed) {
@@ -1125,18 +1112,12 @@ function renderTopology(ctx, canvas, isMini) {
   });
 
   // 4. Draw Flow Particles on Main Lines
-  const particles = isMini ? State.particlesMini : State.particlesMain;
-  particles.forEach(p => {
+  State.particlesMain.forEach(p => {
     const line = gridLines[p.lineIdx];
     if (!line || line.isVirtual || !positions[line.from] || !positions[line.to]) return;
 
     const isFault = line.isFaultTarget;
-    let isOpen = false;
-    if (isMini) {
-      if (isFault) isOpen = true;
-    } else {
-      if (isFault && t >= 1.5) isOpen = true;
-    }
+    const isOpen = isFault && t >= 1.5;
 
     if (!isOpen && !(isFault && t >= 1.0 && t < 1.5)) {
       const p1 = getPt(positions[line.from]);
@@ -1144,7 +1125,7 @@ function renderTopology(ctx, canvas, isMini) {
       const px = p1.x + (p2.x - p1.x) * p.progress;
       const py = p1.y + (p2.y - p1.y) * p.progress;
 
-      ctx.fillStyle = isMini || t >= 28.4 ? '#10b981' : '#38bdf8';
+      ctx.fillStyle = t >= 28.4 ? '#10b981' : '#38bdf8';
       ctx.beginPath();
       ctx.arc(px, py, p.size * scale, 0, Math.PI * 2);
       ctx.fill();
@@ -1163,9 +1144,7 @@ function renderTopology(ctx, canvas, isMini) {
 
     let color = '#2563eb';
 
-    if (isMini) {
-      color = '#10b981';
-    } else if (t < 1.0) {
+    if (t < 1.0) {
       color = '#2563eb';
     } else if (t < 1.5) {
       if (bNum === pf?.child_bus || bNum === pf?.parent_bus) {
@@ -1222,7 +1201,44 @@ function drawLightningBolt(ctx, x, y, scale) {
   ctx.restore();
 }
 
-// --- Card 4: Voltage Profile Chart Renderer ---
+// --- Instantaneous Bus Voltage Calculator for Real-time Sequence Simulation ---
+function getInstantaneousBusVoltage(bStr, t) {
+  const pf = State.powerFlow;
+  if (!pf) return 1.0;
+  const bNum = parseInt(bStr);
+  const vp = pf.v_prefault?.[bStr] || 1.0;
+  const vf = pf.v_fault?.[bStr] || 0.1;
+  const islandSet = new Set(pf.island_buses || []);
+  const inIsland = islandSet.has(bNum);
+  const vr = pf.v_restored?.[bStr] || 0.98;
+
+  if (t < 1.0) {
+    // Phase 0: Normal pre-fault operating grid
+    return vp;
+  } else if (t < 1.5) {
+    // Phase 1: Fault event (voltage sag collapses into fault valley)
+    const p = Math.min(1.0, (t - 1.0) / 0.15);
+    return vp + (vf - vp) * p;
+  } else if (t < 12.3) {
+    // Phase 2: Fault isolated (Switch opened) -> Upstream recovers to nominal (vp); Islanded buses drop to 0.00 pu (Blackout)
+    const p = Math.min(1.0, (t - 1.5) / 0.25);
+    const v_iso = inIsland ? 0.0000 : vp;
+    return vf + (v_iso - vf) * p;
+  } else if (t < 28.4) {
+    // Phase 3: Step 1 Tie switch closes at t=12.3s -> Island re-energizes dynamically from 0.00 pu up to ~0.93-0.95 pu
+    const p = Math.min(1.0, (t - 12.3) / 2.0);
+    const v_iso = inIsland ? 0.0000 : vp;
+    const v_step1 = inIsland ? +(0.9250 + (Math.sin(bNum) * 0.015)).toFixed(4) : vp;
+    return v_iso + (v_step1 - v_iso) * p;
+  } else {
+    // Phase 4: Step 2 Tie switch closes at t=28.4s -> Loop support stabilizes full restoration profile vr
+    const p = Math.min(1.0, (t - 28.4) / 2.0);
+    const v_step1 = inIsland ? +(0.9250 + (Math.sin(bNum) * 0.015)).toFixed(4) : vp;
+    return v_step1 + (vr - v_step1) * p;
+  }
+}
+
+// --- Card 4: Live Voltage Profile Chart Renderer (Time-Sequential) ---
 function renderVoltageProfileChart() {
   if (!cvsVoltageProfile || !cvsVoltageProfile.parentElement) return;
   const w = cvsVoltageProfile.parentElement.clientWidth;
@@ -1239,6 +1255,7 @@ function renderVoltageProfileChart() {
   const is69 = (State.feeder === 'ieee69');
   const maxBus = is69 ? 69 : 33;
 
+  // 1. Draw Grid lines & IEEE standard 0.95 pu allowable limit line
   ctxVoltageProfile.strokeStyle = '#e2e8f0';
   ctxVoltageProfile.lineWidth = 1;
   ctxVoltageProfile.beginPath();
@@ -1268,6 +1285,17 @@ function renderVoltageProfileChart() {
   });
   ctxVoltageProfile.stroke();
 
+  // Draw 0.95 pu ANSI C84.1 minimum limit threshold line
+  const y95 = padTop + plotH - (0.95 / 1.5) * plotH;
+  ctxVoltageProfile.strokeStyle = 'rgba(239, 68, 68, 0.25)';
+  ctxVoltageProfile.lineWidth = 1;
+  ctxVoltageProfile.setLineDash([2, 4]);
+  ctxVoltageProfile.beginPath();
+  ctxVoltageProfile.moveTo(padLeft, y95);
+  ctxVoltageProfile.lineTo(padLeft + plotW, y95);
+  ctxVoltageProfile.stroke();
+  ctxVoltageProfile.setLineDash([]);
+
   ctxVoltageProfile.fillText('Bus Number', padLeft + plotW / 2, padTop + plotH + 16);
 
   ctxVoltageProfile.save();
@@ -1284,10 +1312,12 @@ function renderVoltageProfileChart() {
     y: padTop + plotH - (Math.max(0, Math.min(1.5, v)) / 1.5) * plotH
   });
 
-  // 1. Pre-fault Trace (Blue Dashed)
+  const t = State.time;
+
+  // 2. Reference Baseline: Pre-fault Profile (faint dashed)
   ctxVoltageProfile.save();
-  ctxVoltageProfile.strokeStyle = '#2563eb';
-  ctxVoltageProfile.lineWidth = 1.8;
+  ctxVoltageProfile.strokeStyle = 'rgba(37, 99, 235, 0.35)';
+  ctxVoltageProfile.lineWidth = 1.4;
   ctxVoltageProfile.setLineDash([4, 3]);
   ctxVoltageProfile.beginPath();
   for (let i = 1; i <= maxBus; i++) {
@@ -1296,200 +1326,79 @@ function renderVoltageProfileChart() {
     else ctxVoltageProfile.lineTo(pt.x, pt.y);
   }
   ctxVoltageProfile.stroke();
-
-  ctxVoltageProfile.setLineDash([]);
-  ctxVoltageProfile.fillStyle = '#2563eb';
-  const stepDot = is69 ? 4 : 2;
-  for (let i = 1; i <= maxBus; i += stepDot) {
-    const pt = getPt(i, State.powerFlow.v_prefault[String(i)] || 1.0);
-    ctxVoltageProfile.beginPath();
-    ctxVoltageProfile.arc(pt.x, pt.y, 2.0, 0, Math.PI * 2);
-    ctxVoltageProfile.fill();
-  }
   ctxVoltageProfile.restore();
 
-  // 2. During Fault Trace (Red Solid)
+  // 3. LIVE Dynamic Sequential Operating Voltage Curve V(t)
+  let liveColor = '#2563eb';
+  let phaseLabel = 'Pre-Fault Normal';
+  if (t >= 1.0 && t < 1.5) {
+    liveColor = '#ef4444';
+    phaseLabel = 'Fault Sag Active';
+  } else if (t >= 1.5 && t < 12.3) {
+    liveColor = '#f59e0b';
+    phaseLabel = 'Isolated (Blackout Island @ 0V)';
+  } else if (t >= 12.3 && t < 28.4) {
+    liveColor = '#059669';
+    phaseLabel = 'Restoring (Tie 1 Active)';
+  } else if (t >= 28.4) {
+    liveColor = '#10b981';
+    phaseLabel = 'Restored Grid';
+  }
+
+  // Draw Live Voltage Line
   ctxVoltageProfile.save();
-  ctxVoltageProfile.strokeStyle = '#ef4444';
-  ctxVoltageProfile.lineWidth = 2.0;
+  ctxVoltageProfile.strokeStyle = liveColor;
+  ctxVoltageProfile.lineWidth = 2.4;
+  ctxVoltageProfile.shadowColor = liveColor;
+  ctxVoltageProfile.shadowBlur = 4;
   ctxVoltageProfile.beginPath();
   for (let i = 1; i <= maxBus; i++) {
-    const pt = getPt(i, State.powerFlow.v_fault[String(i)] || 0.1);
+    const vLive = getInstantaneousBusVoltage(String(i), t);
+    const pt = getPt(i, vLive);
     if (i === 1) ctxVoltageProfile.moveTo(pt.x, pt.y);
     else ctxVoltageProfile.lineTo(pt.x, pt.y);
   }
   ctxVoltageProfile.stroke();
-
-  ctxVoltageProfile.fillStyle = '#ef4444';
-  for (let i = 1; i <= maxBus; i += stepDot) {
-    const pt = getPt(i, State.powerFlow.v_fault[String(i)] || 0.1);
-    ctxVoltageProfile.beginPath();
-    ctxVoltageProfile.arc(pt.x, pt.y, 2.0, 0, Math.PI * 2);
-    ctxVoltageProfile.fill();
-  }
   ctxVoltageProfile.restore();
 
-  // 3. After Restoration Trace (Green Solid)
-  ctxVoltageProfile.save();
-  ctxVoltageProfile.strokeStyle = '#10b981';
-  ctxVoltageProfile.lineWidth = 2.0;
-  ctxVoltageProfile.beginPath();
-  for (let i = 1; i <= maxBus; i++) {
-    const pt = getPt(i, State.powerFlow.v_restored[String(i)] || 0.98);
-    if (i === 1) ctxVoltageProfile.moveTo(pt.x, pt.y);
-    else ctxVoltageProfile.lineTo(pt.x, pt.y);
-  }
-  ctxVoltageProfile.stroke();
-
-  ctxVoltageProfile.fillStyle = '#10b981';
+  // Draw Live Node Dots
+  const stepDot = is69 ? 4 : 1;
   for (let i = 1; i <= maxBus; i += stepDot) {
-    const pt = getPt(i, State.powerFlow.v_restored[String(i)] || 0.98);
+    const vLive = getInstantaneousBusVoltage(String(i), t);
+    const pt = getPt(i, vLive);
+    ctxVoltageProfile.fillStyle = vLive < 0.90 ? '#ef4444' : liveColor;
     ctxVoltageProfile.beginPath();
-    ctxVoltageProfile.arc(pt.x, pt.y, 2.0, 0, Math.PI * 2);
+    ctxVoltageProfile.arc(pt.x, pt.y, vLive < 0.90 ? 3.0 : 2.2, 0, Math.PI * 2);
     ctxVoltageProfile.fill();
+    ctxVoltageProfile.strokeStyle = '#ffffff';
+    ctxVoltageProfile.lineWidth = 0.8;
+    ctxVoltageProfile.stroke();
   }
-  ctxVoltageProfile.restore();
 
-  // Legend at top right
-  const legX = padLeft + plotW - 130;
+  // 4. Dynamic Legend & Live Status Pill
+  const legX = padLeft + plotW - 170;
   const legY = padTop + 5;
   ctxVoltageProfile.font = '8.5px sans-serif';
   ctxVoltageProfile.textAlign = 'left';
 
-  ctxVoltageProfile.strokeStyle = '#2563eb';
+  // Live trace legend item
+  ctxVoltageProfile.fillStyle = liveColor;
+  ctxVoltageProfile.fillRect(legX, legY + 2, 8, 8);
+  ctxVoltageProfile.fillText(`Live: ${phaseLabel}`, legX + 12, legY + 9);
+
+  // Baseline reference item
+  ctxVoltageProfile.strokeStyle = 'rgba(37, 99, 235, 0.5)';
   ctxVoltageProfile.setLineDash([3, 2]);
   ctxVoltageProfile.beginPath();
-  ctxVoltageProfile.moveTo(legX, legY + 4);
-  ctxVoltageProfile.lineTo(legX + 16, legY + 4);
+  ctxVoltageProfile.moveTo(legX, legY + 20);
+  ctxVoltageProfile.lineTo(legX + 8, legY + 20);
   ctxVoltageProfile.stroke();
   ctxVoltageProfile.setLineDash([]);
-  ctxVoltageProfile.fillStyle = '#2563eb';
-  ctxVoltageProfile.fillText('Pre-fault', legX + 22, legY + 6);
-
-  ctxVoltageProfile.strokeStyle = '#ef4444';
-  ctxVoltageProfile.beginPath();
-  ctxVoltageProfile.moveTo(legX, legY + 16);
-  ctxVoltageProfile.lineTo(legX + 16, legY + 16);
-  ctxVoltageProfile.stroke();
-  ctxVoltageProfile.fillStyle = '#ef4444';
-  ctxVoltageProfile.fillText('During fault', legX + 22, legY + 18);
-
-  ctxVoltageProfile.strokeStyle = '#10b981';
-  ctxVoltageProfile.beginPath();
-  ctxVoltageProfile.moveTo(legX, legY + 28);
-  ctxVoltageProfile.lineTo(legX + 16, legY + 28);
-  ctxVoltageProfile.stroke();
-  ctxVoltageProfile.fillStyle = '#10b981';
-  ctxVoltageProfile.fillText('After restoration', legX + 22, legY + 30);
+  ctxVoltageProfile.fillStyle = '#64748b';
+  ctxVoltageProfile.fillText('Nominal Baseline (1.0 pu)', legX + 12, legY + 22);
 }
 
-// --- Card 5: Real-time Bus Voltage (Selected Buses) ---
-function renderRealtimeVoltageChart() {
-  if (!cvsRealtime || !cvsRealtime.parentElement) return;
-  const w = cvsRealtime.parentElement.clientWidth;
-  const h = cvsRealtime.parentElement.clientHeight;
-  ctxRealtime.clearRect(0, 0, w, h);
-
-  const padLeft = 40;
-  const padRight = 15;
-  const padTop = 15;
-  const padBottom = 28;
-  const plotW = w - padLeft - padRight;
-  const plotH = h - padTop - padBottom;
-
-  ctxRealtime.strokeStyle = '#e2e8f0';
-  ctxRealtime.lineWidth = 1;
-  ctxRealtime.beginPath();
-
-  const yTicks = [0.0, 0.5, 1.0, 1.5];
-  ctxRealtime.fillStyle = '#64748b';
-  ctxRealtime.font = '9px sans-serif';
-  ctxRealtime.textAlign = 'right';
-  ctxRealtime.textBaseline = 'middle';
-
-  yTicks.forEach(val => {
-    const y = padTop + plotH - (val / 1.5) * plotH;
-    ctxRealtime.moveTo(padLeft, y);
-    ctxRealtime.lineTo(padLeft + plotW, y);
-    ctxRealtime.fillText(val.toFixed(1), padLeft - 6, y);
-  });
-
-  const xTicks = [0, 10, 20, 30, 40, 50];
-  ctxRealtime.textAlign = 'center';
-  ctxRealtime.textBaseline = 'top';
-
-  xTicks.forEach(tVal => {
-    const x = padLeft + (tVal / 50) * plotW;
-    ctxRealtime.moveTo(x, padTop);
-    ctxRealtime.lineTo(x, padTop + plotH);
-    ctxRealtime.fillText(tVal, x, padTop + plotH + 5);
-  });
-  ctxRealtime.stroke();
-
-  ctxRealtime.fillText('Time (s)', padLeft + plotW / 2, padTop + plotH + 16);
-
-  ctxRealtime.save();
-  ctxRealtime.translate(12, padTop + plotH / 2);
-  ctxRealtime.rotate(-Math.PI / 2);
-  ctxRealtime.textAlign = 'center';
-  ctxRealtime.fillText('Voltage (pu)', 0, 0);
-  ctxRealtime.restore();
-
-  const getPt = (tVal, v) => ({
-    x: padLeft + (tVal / 50) * plotW,
-    y: padTop + plotH - (Math.max(0, Math.min(1.5, v)) / 1.5) * plotH
-  });
-
-  const pf = State.powerFlow;
-  const selectedBuses = pf?.selected_buses || [];
-  const times = pf?.time_series?.times || [0, 5, 9.8, 10, 15, 20, 25, 30, 33, 35, 40, 45, 50];
-  const trajectories = pf?.time_series?.trajectories || {};
-
-  selectedBuses.forEach(bInfo => {
-    const yVals = trajectories[bInfo.bus] || times.map(() => 1.0);
-    ctxRealtime.strokeStyle = bInfo.color;
-    ctxRealtime.lineWidth = 1.8;
-    ctxRealtime.beginPath();
-    times.forEach((tVal, idx) => {
-      const pt = getPt(tVal, yVals[idx]);
-      if (idx === 0) ctxRealtime.moveTo(pt.x, pt.y);
-      else ctxRealtime.lineTo(pt.x, pt.y);
-    });
-    ctxRealtime.stroke();
-
-    ctxRealtime.fillStyle = bInfo.color;
-    times.forEach((tVal, idx) => {
-      const pt = getPt(tVal, yVals[idx]);
-      ctxRealtime.beginPath();
-      ctxRealtime.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
-      ctxRealtime.fill();
-    });
-  });
-
-  const curX = padLeft + (State.time / 50) * plotW;
-  ctxRealtime.strokeStyle = '#ef4444';
-  ctxRealtime.lineWidth = 1.5;
-  ctxRealtime.setLineDash([3, 2]);
-  ctxRealtime.beginPath();
-  ctxRealtime.moveTo(curX, padTop);
-  ctxRealtime.lineTo(curX, padTop + plotH);
-  ctxRealtime.stroke();
-  ctxRealtime.setLineDash([]);
-
-  const legX = padLeft + plotW - 145;
-  const legY = padTop + 5;
-  ctxRealtime.font = '8px sans-serif';
-  ctxRealtime.textAlign = 'left';
-
-  selectedBuses.forEach((item, idx) => {
-    const y = legY + idx * 11;
-    ctxRealtime.fillStyle = item.color;
-    ctxRealtime.fillRect(legX, y + 1, 8, 8);
-    ctxRealtime.fillText(item.label, legX + 12, y + 8);
-  });
-}
-
-// --- Card 6: Load Restoration Chart ---
+// --- Card 5: Load Restoration Chart (Time-Sequential) ---
 function renderLoadRestorationChart() {
   if (!cvsLoad || !cvsLoad.parentElement) return;
   const w = cvsLoad.parentElement.clientWidth;
@@ -1548,41 +1457,74 @@ function renderLoadRestorationChart() {
 
   const targetPct = State.powerFlow?.restored_pct || 96.0;
 
-  const pts = [
+  // Physical restoration sequence points
+  const allPts = [
     { t: 0, p: 0 },
-    { t: 4, p: targetPct * 0.08 },
-    { t: 8, p: targetPct * 0.18 },
-    { t: 12, p: targetPct * 0.28 },
-    { t: 16, p: targetPct * 0.42 },
-    { t: 20, p: targetPct * 0.58 },
-    { t: 24, p: targetPct * 0.74 },
-    { t: 28, p: targetPct * 0.86 },
-    { t: 32, p: targetPct * 0.94 },
-    { t: 36, p: targetPct * 0.98 },
-    { t: 40, p: targetPct },
-    { t: 45, p: targetPct },
-    { t: 50, p: targetPct }
+    { t: 1.0, p: 0 },
+    { t: 1.5, p: 0 },
+    { t: 12.3, p: +(targetPct * 0.25).toFixed(1) },
+    { t: 18.0, p: +(targetPct * 0.55).toFixed(1) },
+    { t: 24.0, p: +(targetPct * 0.75).toFixed(1) },
+    { t: 28.4, p: +(targetPct * 0.88).toFixed(1) },
+    { t: 33.0, p: +(targetPct * 0.96).toFixed(1) },
+    { t: 36.0, p: targetPct },
+    { t: 42.0, p: targetPct },
+    { t: 50.0, p: targetPct }
   ];
 
-  ctxLoad.strokeStyle = '#10b981';
-  ctxLoad.lineWidth = 2.0;
+  // Draw faint background guideline for target path
+  ctxLoad.strokeStyle = 'rgba(16, 185, 129, 0.18)';
+  ctxLoad.lineWidth = 1.2;
+  ctxLoad.setLineDash([3, 3]);
   ctxLoad.beginPath();
-  pts.forEach((pt, idx) => {
+  allPts.forEach((pt, idx) => {
     const pos = getPt(pt.t, pt.p);
     if (idx === 0) ctxLoad.moveTo(pos.x, pos.y);
     else ctxLoad.lineTo(pos.x, pos.y);
   });
   ctxLoad.stroke();
+  ctxLoad.setLineDash([]);
 
-  ctxLoad.fillStyle = '#10b981';
-  pts.forEach(pt => {
-    const pos = getPt(pt.t, pt.p);
+  // Calculate live restored load % based on sequential time t
+  const getLiveLoadPct = (tVal) => {
+    if (tVal < 1.5) return 0.0;
+    for (let i = 0; i < allPts.length - 1; i++) {
+      if (tVal >= allPts[i].t && tVal <= allPts[i + 1].t) {
+        const ratio = (tVal - allPts[i].t) / (allPts[i + 1].t - allPts[i].t);
+        return allPts[i].p + ratio * (allPts[i + 1].p - allPts[i].p);
+      }
+    }
+    return targetPct;
+  };
+
+  const curT = State.time;
+  const activePts = allPts.filter(pt => pt.t <= curT);
+  if (curT > 0 && (activePts.length === 0 || activePts[activePts.length - 1].t < curT)) {
+    activePts.push({ t: curT, p: getLiveLoadPct(curT) });
+  }
+
+  if (activePts.length > 0) {
+    ctxLoad.strokeStyle = '#10b981';
+    ctxLoad.lineWidth = 2.2;
     ctxLoad.beginPath();
-    ctxLoad.arc(pos.x, pos.y, 2.5, 0, Math.PI * 2);
-    ctxLoad.fill();
-  });
+    activePts.forEach((pt, idx) => {
+      const pos = getPt(pt.t, pt.p);
+      if (idx === 0) ctxLoad.moveTo(pos.x, pos.y);
+      else ctxLoad.lineTo(pos.x, pos.y);
+    });
+    ctxLoad.stroke();
 
-  const curX = padLeft + (State.time / 50) * plotW;
+    ctxLoad.fillStyle = '#10b981';
+    activePts.forEach(pt => {
+      const pos = getPt(pt.t, pt.p);
+      ctxLoad.beginPath();
+      ctxLoad.arc(pos.x, pos.y, 2.5, 0, Math.PI * 2);
+      ctxLoad.fill();
+    });
+  }
+
+  // Playhead Vertical Indicator
+  const curX = padLeft + (curT / 50) * plotW;
   ctxLoad.strokeStyle = '#ef4444';
   ctxLoad.lineWidth = 1.5;
   ctxLoad.setLineDash([3, 2]);

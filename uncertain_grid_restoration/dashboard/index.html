@@ -273,7 +273,7 @@
 
     </section>
 
-    <!-- ROW 2: Voltage Profile | Real-time Bus Voltage | Load Restoration -->
+    <!-- ROW 2: Voltage Profile | Load Restoration -->
     <section class="row-2">
 
       <!-- Panel 4: Voltage Profile -->
@@ -289,23 +289,10 @@
         </div>
       </div>
 
-      <!-- Panel 5: Real-time Bus Voltage -->
+      <!-- Panel 5: Load Restoration -->
       <div class="card">
         <div class="card-header">
-          <span>5. Real-time Bus Voltage (Selected Buses)</span>
-        </div>
-        <div class="card-body">
-          <div class="chart-title-sub" style="height: 18px;"></div>
-          <div class="chart-container">
-            <canvas id="realtimeVoltageCanvas" class="chart-canvas"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Panel 6: Load Restoration -->
-      <div class="card">
-        <div class="card-header">
-          <span>6. Load Restoration</span>
+          <span>5. Load Restoration</span>
         </div>
         <div class="card-body">
           <div class="chart-title-sub">Restored Load Percentage</div>
@@ -320,10 +307,10 @@
     <!-- ROW 3: Fault Detection Output | Uncertainty | Switching Actions | Post-Restoration Network -->
     <section class="row-3">
 
-      <!-- Panel 7: Fault Detection Output -->
+      <!-- Panel 6: Fault Detection Output -->
       <div class="card">
         <div class="card-header">
-          <span>7. Fault Detection Output</span>
+          <span>6. Fault Detection Output</span>
         </div>
         <div class="card-body">
           <div class="fault-detect-box" id="detectStatusBox">
@@ -355,10 +342,10 @@
         </div>
       </div>
 
-      <!-- Panel 8: Uncertainty / Probable Fault Location -->
+      <!-- Panel 7: Uncertainty / Probable Fault Location -->
       <div class="card">
         <div class="card-header">
-          <span>8. Uncertainty / Probable Fault Location</span>
+          <span>7. Uncertainty / Probable Fault Location</span>
         </div>
         <div class="card-body">
           <div class="chart-title-sub">Probability of Fault Location</div>
@@ -368,10 +355,10 @@
         </div>
       </div>
 
-      <!-- Panel 9: Switching Actions (Restoration) -->
+      <!-- Panel 8: Switching Actions (Restoration) -->
       <div class="card">
         <div class="card-header">
-          <span>9. Switching Actions (Restoration)</span>
+          <span>8. Switching Actions (Restoration)</span>
         </div>
         <div class="card-body" style="padding: 6px;">
           <div class="switching-table-container">
@@ -409,18 +396,6 @@
                 </tr>
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Panel 10: Post-Restoration Network -->
-      <div class="card">
-        <div class="card-header">
-          <span>10. Post-Restoration Network</span>
-        </div>
-        <div class="card-body" style="padding: 4px;">
-          <div class="mini-topology-container">
-            <canvas id="miniTopologyCanvas" class="mini-topology-canvas"></canvas>
           </div>
         </div>
       </div>
